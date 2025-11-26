@@ -1,0 +1,5 @@
+{
+  "name": "CTMS Fusion Analysis Config Portal",
+  "description": "A configuration portal for financial anti-money laundering (AML) and counter-terrorist financing (CTF) analysis engines.",
+  "requestFramePermissions": []
+}
