@@ -1,8 +1,8 @@
-from app.model.transaction_model import Transaction
+from app.model.transaction import Transaction
 from app.repository.transaction_repository import TransactionRepository
 from app.analysis.sanction_and_watchlist_analysis import SanctionWatchlistRisk
 from app.repository.sanction_watchlist_risk_repository import SanctionWatchlistRiskRepository
-from app.model.risk_and_sanctions_models import SanctionWatchlistRiskProfile
+from app.model.customer_risk_profile import SanctionWatchlistRiskProfile
 from app.config import test_database
 
 def start_sanction_watchlist_risk_analysis_service():

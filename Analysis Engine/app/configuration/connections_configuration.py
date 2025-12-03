@@ -1,7 +1,7 @@
-from app.configuration import Configuration
+from app.configuration.configuration import Configuration
 
 
-configuration = Configuration ("configuration/kv_store.db")
+configuration = Configuration ("kv_store.db")
 
 
 def get_database_connection_settings():
@@ -12,6 +12,7 @@ def get_database_connection_settings():
         'host': configuration.get("database_host"),
         'port': configuration.get("database_port"),
         'database_name': configuration.get("database_name"),
+        'table_name': configuration.get("table_name"),
         'connection_string': configuration.get("database_connection_string")
     }
 
@@ -22,6 +23,7 @@ def set_database_connection_settings(connection_parameters):
     configuration.set("database_host", connection_parameters.get('host', ''))
     configuration.set("database_port", connection_parameters.get('port', ''))
     configuration.set("database_name", connection_parameters.get('database_name', ''))
+    configuration.set("table_name", connection_parameters.get('table_name', ''))
     configuration.set("database_connection_string", connection_parameters.get('connection_string', ''))
 
     return {

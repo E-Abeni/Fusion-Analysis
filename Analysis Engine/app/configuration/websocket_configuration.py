@@ -1,6 +1,6 @@
-from app.configuration import Configuration
+from app.configuration.configuration import Configuration
 
-configuration = Configuration ("configuration/kv_store.db")
+configuration = Configuration ("kv_store.db")
 
 def get_websocket_settings():
     return {

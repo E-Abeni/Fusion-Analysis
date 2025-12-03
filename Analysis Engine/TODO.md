@@ -43,4 +43,10 @@ Configurations
 4. Finish and Test the api end points
 
 
+today
+
+
+- write repository for risk profiles and sanction lists
+
+
 

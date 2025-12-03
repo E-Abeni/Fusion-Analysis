@@ -1,9 +1,9 @@
 from fastapi import FastAPI
 from app.repository.transaction_repository import TransactionRepository
-from app.analysis.transaction_monitoring import TransactionMonitoringRisk
+from app.analysis.transaction_monitoring import TransactionRelatedRisk
 from app.analysis.customer_risk_analysis import CustomerRiskAnalysis
 from app.analysis.sanction_and_watchlist_analysis import SanctionWatchlistRisk
-from app.model.transaction_model import Transaction as TransactionData
+from app.model.transaction import Transaction as TransactionData
 from app.service.Transaction_monitoring_service import start_transaction_monitoring_service, save_transaction_risk_report
 from app.service.customer_risk_analysis_service import start_customer_risk_analysis_service, save_customer_risk_report
 from app.service.sanction_watchlist_analysis_service import start_sanction_watchlist_risk_analysis_service, save_sanction_watchlist_report
@@ -35,7 +35,7 @@ def ingest_transaction_and_calculate_risk_score(transaction: TransactionData):
         all_transactions = TransactionRepository(test_database).get_pandas_df()
         print(f"Total transactions in repository: {all_transactions.shape}")
 
-        transaction_risk = TransactionMonitoringRisk(all_transactions, transaction)
+        transaction_risk = TransactionRelatedRisk(all_transactions, transaction)
         transaction_risk_report = transaction_risk.generate_transaction_risk_report()
         save_transaction_risk_report(transaction, transaction_risk_report)
 
@@ -93,12 +93,12 @@ def analyze_all_sanctions_and_watchlist_risk():
         raise HTTPException(status_code=500, detail=f"Internal Server Error during sanctions and watchlist risk analysis: {e}")
 
 def main():
-    from app.model.transaction_model import Transaction
+    from app.model.transaction import Transaction
 
     tm = TransactionRepository(test_database)
     df = tm.get_pandas_df()
     d = 1
-    tmm = TransactionMonitoringRisk(df, 
+    tmm = TransactionRelatedRisk(df, 
         Transaction(
             TRANSACTIONID = df.iloc[d]['TRANSACTIONID'],
             REPORTNO= str(df.iloc[d]['REPORTNO']),

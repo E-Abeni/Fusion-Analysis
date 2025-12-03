@@ -1,7 +1,7 @@
 from app.repository.transaction_repository import TransactionRepository
 from app.analysis.customer_risk_analysis import CustomerRiskAnalysis
 from app.repository.customer_risk_repository import CustomerRiskRepository
-from app.model.risk_and_sanctions_models import CustomerRiskProfile
+from app.model.customer_risk_profile import CustomerRiskProfile
 from app.config import test_database
 
 

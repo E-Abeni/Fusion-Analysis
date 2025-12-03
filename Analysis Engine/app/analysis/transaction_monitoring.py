@@ -1,9 +1,9 @@
 import random
-from app.model.transaction_model import Transaction
 import pandas as pd
+import json
 
-class TransactionMonitoringRisk:
-    def __init__(self, df, transaction: Transaction):
+class TransactionRelatedRisk:
+    def __init__(self, df, transaction):
         self.df = df
         self.transaction = transaction
         self.preprocessing()
@@ -12,8 +12,6 @@ class TransactionMonitoringRisk:
         print(self.df.head())
         print(self.df.dtypes)
         print("===================================================================")
-        print(Transaction.generate_transactions_dataframe([self.transaction]))
-        print("===================================================================")
         print("Time Window Analysis: ")
         print("One hour: ", self.time_window_1hr())
         print("24 hours: ", self.time_window_24hr())
@@ -21,16 +19,23 @@ class TransactionMonitoringRisk:
         print("Variance Analysis: ")
 
     def preprocessing(self):
-        self.df['TIMESTAMP'] = pd.to_datetime(self.df['TRANSACTIONDATE'] + ' ' + self.df['TRANSACTIONTIME'])
-        self.df['TIMESTAMP'] = pd.to_datetime(self.df['TIMESTAMP'])
+        combined_series = self.df['TRANSACTIONDATE'].astype(str) + ' ' + self.df['TRANSACTIONTIME'].astype(str)
+        self.df['TIMESTAMP'] = pd.to_datetime(combined_series, errors='coerce')
+
+        self.df['TRANSACTIONDATE'] = pd.to_datetime(self.df['TRANSACTIONDATE'], errors='coerce')
+        self.df['TRANSACTIONTIME'] = pd.to_datetime(self.df['TRANSACTIONTIME'], errors='coerce')
+        #self.df['TIMESTAMP'] = pd.to_datetime(self.df['TRANSACTIONDATE'] + ' ' + self.df['TRANSACTIONTIME'])
+        #self.df['TIMESTAMP'] = pd.to_datetime(self.df['TIMESTAMP'])
         self.df.sort_values(by='TIMESTAMP', inplace=True)
         self.df.reset_index(drop=True, inplace=True)
         self.df['BIRTHDATE'] = pd.to_datetime(self.df['BIRTHDATE'], errors='coerce')
         self.df['OPENEDDATE'] = pd.to_datetime(self.df['OPENEDDATE'], errors='coerce')
-        self.df['AGE'] = (pd.Timestamp.now() - self.df['BIRTHDATE']).dt.days // 365
-        self.df['ACCOUNT_AGE_DAYS'] = (pd.Timestamp.now() - self.df['OPENEDDATE']).dt.days
+        #self.df['AGE'] = (pd.Timestamp.now().tz_localize(None) - self.df['BIRTHDATE']).dt.days // 365
+        #self.df['ACCOUNT_AGE_DAYS'] = (pd.Timestamp.now().tz_localize(None) - self.df['OPENEDDATE']).dt.days
         self.df['CLOSEDDATE'] = pd.to_datetime(self.df['CLOSEDDATE'], errors='coerce')
         self.df['BRENTFORDIGIT'] = self.df['AMOUNTINBIRR'].astype(str).str[0].astype(int)
+
+        self.transaction = self.df.iloc[0]
 
 
     def time_window_1hr(self):
@@ -105,7 +110,7 @@ class TransactionMonitoringRisk:
 
     def leading_digit_distribution(self):
         distribution = self.customer_df['BRENTFORDIGIT'].value_counts(normalize=True).sort_index()
-        return distribution.to_dict()
+        return json.dumps(distribution.to_dict())
 
     def round_number_hoarding(self):
         count = self.customer_df[self.customer_df['AMOUNTINBIRR'] % 1000 == 0].shape[0]
@@ -157,7 +162,7 @@ class TransactionMonitoringRisk:
 
 
 if __name__ == "__main__":
-    risk_calculator = TransactionMonitoringRisk(df=None, transaction=None)
+    risk_calculator = TransactionRelatedRisk(df=None, transaction=None)
     risk_report = risk_calculator.generate_transaction_risk_report()
     print(risk_report)
 

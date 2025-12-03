@@ -1,55 +1,27 @@
-from app.repository.transaction_risk_repository import TransactionRiskRepository
-from app.repository.transaction_repository import TransactionRepository
-from app.analysis.transaction_monitoring import TransactionMonitoringRisk
-from app.model.transaction_risk_model import TransactionRiskResult
-from app.config import test_database
+from app.analysis.transaction_monitoring import TransactionRelatedRisk
+from app.model.transaction_risk_profile import TransactionRiskProfile
+from app.configuration.schema_configuration import get_schema_configuration_settings
+from app.repository.transaction_repository import get_all_transactions, get_transaction_by_column
+from app.model.transaction import Transaction
 
-def start_transaction_monitoring_service():
-    # Initialize repositories
-    transaction_repo = TransactionRepository(test_database)
-    counter = 0
+schema = get_schema_configuration_settings()
+reversed_schema = {v: k for k, v in schema.items()}
+
+
+transactions = get_all_transactions(pandas_df=True)
+transactions.columns = [reversed_schema.get(name, name) for name in transactions.columns]
+
+def calculate_risk_single_transaction(transaction):
+    monitoring = TransactionRelatedRisk(transactions, transaction)
+    risk_report = monitoring.generate_transaction_risk_report()
     
-    # Fetch transactions
-    transactions = transaction_repo.get_all_transactions()
-
-    # Monitor each transaction
-    for transaction in transactions:
-        try:
-            monitoring = TransactionMonitoringRisk(transaction_repo.get_pandas_df(), transaction)
-            risk_report = monitoring.generate_transaction_risk_report()
-            
-            # Save risk report
-            save_transaction_risk_report(transaction, risk_report)
-            counter += 1
-            print(f"Processed transaction {transaction.TRANSACTIONID} - Total processed: {counter}")
-        except Exception as e:
-            print(f"Error processing transaction {transaction.TRANSACTIONID}: {e}")
-            
-    print("completed.........................")
-    return {
-        "status": "completed",
-        "total_transactions_processed": len(transactions),
-        "successful_reports_saved": counter,
-        "message": "Transaction monitoring service has finished processing."
-    }
+    return risk_report
 
 
-def save_transaction_risk_report(transaction, risk_report):
-    transaction_risk_repo = TransactionRiskRepository(test_database)
-    
-    risk_result = TransactionRiskResult(
-        transaction_id=transaction.TRANSACTIONID,
-        overall_risk_score=risk_report['overall_risk'],
-        risk_level=risk_report['risk_level'],
-        velocity_score=risk_report['details']['velocity_score'],
-        geographical_anomaly=risk_report['details']['geographical_anomaly'],
-        amount_deviation=risk_report['details']['amount_deviation']
-    )
+if __name__ == "__main__":
+    #print(transactions.head())
+    transaction = get_transaction_by_column("BRANCHNAME", "ansho branch", all=False, pandas_df=True)
 
-    transaction_risk_repo.insert_result(risk_result)
+    risk_report = calculate_risk_single_transaction(transaction)
+    print(risk_report)
 
-    return {
-        "status": "success",
-        "message": f"Risk report for transaction {transaction.TRANSACTIONID} saved.",
-        "risk_report": risk_report
-    }

@@ -1,7 +1,10 @@
 import random
 import pandas as pd
-from app.model.transaction_model import Transaction
+from app.model.transaction import Transaction
+from sqlalchemy.orm import Session
+from app.database.database import get_engine
 
+engine = get_engine()
 
 class CustomerRiskAnalysis:
     def __init__(self, df, transaction):
@@ -86,7 +89,9 @@ class CustomerRiskAnalysis:
         completeness_ratio = filled_fields / total_fields
         return completeness_ratio
 
-    def risk_score_demographics(self, sanction_list):
+    def risk_score_demographics(self):
+        #TO-DO
+        sanction_list = []
         data = self.customer_df[self.customer_df["BENREGION"].isin(sanction_list) ].value_counts()
         return data
 
@@ -97,27 +102,12 @@ class CustomerRiskAnalysis:
     def risk_score_transaction_history(self):
         return random.randint(1, 100)
 
-    def overall_customer_risk(self):
-        scores = [
-            self.risk_score_demographics(),
-            self.risk_score_customer_type(),
-            self.risk_score_transaction_history()
-        ]
-        return sum(scores) / len(scores)
 
-    def detailed_customer_risk(self):
+    def generate_customer_risk_report(self):
         return {
             "demographics_risk": self.risk_score_demographics(),
             "customer_type_risk": self.risk_score_customer_type(),
             "transaction_history_risk": self.risk_score_transaction_history()
-        }
-
-    def generate_customer_risk_report(self):
-        overall_risk = self.overall_customer_risk()
-        details = self.detailed_customer_risk()
-        return {
-            "overall_risk": overall_risk,
-            "details": details
         }
 
 
