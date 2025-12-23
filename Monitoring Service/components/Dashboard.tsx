@@ -21,14 +21,16 @@ const COLORS = ['#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#10b981'];
 
 export const Dashboard: React.FC<DashboardProps> = ({ stats, volumeHistory, transactions }) => {
   
-  // Calculate Geo Data
+  
   const geoData = useMemo(() => {
     const counts: Record<string, number> = {};
+    /*
     transactions.forEach(t => {
-      if (t.riskLevel === RiskLevel.HIGH || t.riskLevel === RiskLevel.CRITICAL) {
-        counts[t.destinationCountry] = (counts[t.destinationCountry] || 0) + 1;
+      if (false && t.riskLevel === RiskLevel.HIGH || t.riskLevel === RiskLevel.CRITICAL) {
+        //counts[t.destinationCountry] = (counts[t.destinationCountry] || 0) + 1;
       }
     });
+    */
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
@@ -38,11 +40,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ stats, volumeHistory, tran
   // Calculate Flag Distribution
   const flagData = useMemo(() => {
     const counts: Record<string, number> = {};
+    /*
     transactions.forEach(t => {
-      t.flags.forEach(flag => {
+      t.risk_level.forEach(flag => {
         counts[flag] = (counts[flag] || 0) + 1;
       });
     });
+    */
+
     return Object.entries(counts)
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value)
