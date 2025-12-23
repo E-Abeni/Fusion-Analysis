@@ -1,24 +1,24 @@
 from fastapi import FastAPI
-from app.repository.transaction_repository import TransactionRepository
-from app.analysis.transaction_monitoring import TransactionRelatedRisk
-from app.analysis.customer_risk_analysis import CustomerRiskAnalysis
-from app.analysis.sanction_and_watchlist_analysis import SanctionWatchlistRisk
-from app.model.transaction import Transaction as TransactionData
-from app.service.Transaction_monitoring_service import start_transaction_monitoring_service, save_transaction_risk_report
-from app.service.customer_risk_analysis_service import start_customer_risk_analysis_service, save_customer_risk_report
-from app.service.sanction_watchlist_analysis_service import start_sanction_watchlist_risk_analysis_service, save_sanction_watchlist_report
-from app.config import test_database
+from app.service.transaction_risk_analysis_service import calculate_transaction_risk_single_transaction
+from app.service.customer_risk_analysis_service import calculate_customer_risk_single_transaction
+from app.service.configuration_service import get_all_configurations, update_configuration
+from app.dto.transaction_data import TransactionDataDTO as TransactionData
+from app.dto.configuration_data import SettingsRootDTO
+from app.service.data_processing_service import get_processed_data
 from fastapi import HTTPException
 import time
+import pandas as pd
 
 app = FastAPI(
     title="AML Transaction Fusion Analysis Service",
     description="Endpoint for receiving raw transaction data for monitoring."
 )
 
+transactions = get_processed_data()
 
-@app.post("/transactions/ingest")
-def ingest_transaction_and_calculate_risk_score(transaction: TransactionData):
+
+@app.post("/risk/transaction")
+def ingest_transaction_and_generate_transaction_risk_report(transaction: TransactionData):
    
     try:
         # Example of processing: print a subset of the data using the new uppercase attributes
@@ -26,138 +26,95 @@ def ingest_transaction_and_calculate_risk_score(transaction: TransactionData):
         print(f"ID: {transaction.TRANSACTIONID}")
         print(f"Account: {transaction.ACCOUNTNO}")
         print(f"Amount: {transaction.AMOUNTINBIRR} {transaction.CURRENCYTYPE}")
-        print(f"Full Name: {transaction.FULL_NAME}")
+        print(f"Full Name: {transaction.ACCOWNERNAME}")
         
-        # NOTE: This is where you would call your monitoring model or repository.
-        # Example integration point:
-        # risk_score = run_monitoring_model(transaction.dict())
+        transaction_risk_report = calculate_transaction_risk_single_transaction(transaction.generate_transaction_series(transaction), transactions)
+        
+       
+        return {
+            "status": "success",
+            "message": "Transaction data received and Transaction related risk is assessed",
+            "transaction_id": transaction.TRANSACTIONID,
+            "timestamp": time.time(),
+            "transaction_risk_report": transaction_risk_report           
+        }
+        
+        
+    except Exception as e:
+        # Handle unexpected server errors
+        raise HTTPException(status_code=500, detail=f"Internal Server Error during ingestion: {e}")
 
-        all_transactions = TransactionRepository(test_database).get_pandas_df()
-        print(f"Total transactions in repository: {all_transactions.shape}")
 
-        transaction_risk = TransactionRelatedRisk(all_transactions, transaction)
-        transaction_risk_report = transaction_risk.generate_transaction_risk_report()
-        save_transaction_risk_report(transaction, transaction_risk_report)
-
-        customer_risk = CustomerRiskAnalysis(all_transactions, transaction)
-        customer_risk_report = customer_risk.generate_customer_risk_report()
-        save_customer_risk_report(transaction, customer_risk_report)
-
-
-        sanction_watchlist_risk = SanctionWatchlistRisk(all_transactions, transaction)
-        sanction_watchlist_report = sanction_watchlist_risk.generate_sanction_and_watchlist_risk_report()
-        save_sanction_watchlist_report(transaction, sanction_watchlist_report)
+@app.post("/risk/customer")
+def ingest_transaction_and_generate_customer_risk_report(transaction: TransactionData):
+   
+    try:
+        # Example of processing: print a subset of the data using the new uppercase attributes
+        print(f"--- Received Transaction Ingestion Request ---")
+        print(f"ID: {transaction.TRANSACTIONID}")
+        print(f"Account: {transaction.ACCOUNTNO}")
+        print(f"Amount: {transaction.AMOUNTINBIRR} {transaction.CURRENCYTYPE}")
+        print(f"Full Name: {transaction.ACCOWNERNAME}")
+        
+        customer_risk_report = calculate_customer_risk_single_transaction(transaction.generate_transaction_series(transaction), transactions)
+        
 
         return {
             "status": "success",
-            "message": "Transaction data received and risk is assessed",
+            "message": "Transaction data received and Customer related risk is assessed",
             "transaction_id": transaction.TRANSACTIONID,
             "timestamp": time.time(),
-            "transaction_risk_report": transaction_risk_report,
-            "customer_risk_report": customer_risk_report,
-            "sanction_watchlist_report": sanction_watchlist_report            
+            "customer_risk_report": customer_risk_report,         
         }
         
     except Exception as e:
         # Handle unexpected server errors
         raise HTTPException(status_code=500, detail=f"Internal Server Error during ingestion: {e}")
-    
 
-@app.get("/transactions/update_all")
-def update_all_transactions_risk():
-  
-    try:
-        result = start_transaction_monitoring_service()
-        return result
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal Server Error during bulk update: {e}")
-    
-@app.get("/customers/risk_analysis_all")
-def analyze_all_customers_risk():
+
+@app.post("/risk/all")
+def ingest_transaction_and_generate_transaction_and_customer_risk_report(transaction: TransactionData):
    
     try:
-        result = start_customer_risk_analysis_service()
-        return result
+        # Example of processing: print a subset of the data using the new uppercase attributes
+        print(f"--- Received Transaction Ingestion Request ---")
+        print(f"ID: {transaction.TRANSACTIONID}")
+        print(f"Account: {transaction.ACCOUNTNO}")
+        print(f"Amount: {transaction.AMOUNTINBIRR} {transaction.CURRENCYTYPE}")
+        print(f"Full Name: {transaction.ACCOWNERNAME}")
+        
+        transaction_series = transaction.generate_transaction_series(transaction)
+        transaction_risk_report = calculate_transaction_risk_single_transaction(transaction_series, transactions)
+        customer_risk_report = calculate_customer_risk_single_transaction(transaction_series, transactions)
+        
+
+        return {
+            "status": "success",
+            "message": "Transaction data received and Transaction and Customer related risk is assessed",
+            "transaction_id": transaction.TRANSACTIONID,
+            "timestamp": time.time(),
+            "transaction_risk_report": transaction_risk_report,
+            "customer_risk_report": customer_risk_report,           
+        }
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Internal Server Error during customer risk analysis: {e}")
+        # Handle unexpected server errors
+        raise HTTPException(status_code=500, detail=f"Internal Server Error during ingestion: {e}")
+
+
+@app.get("/configuration")
+def get_all_configuration_for_the_analysis_engine():
+    return get_all_configurations()
+
+
+@app.put("/configuration/update")
+async def update_settings_endpoint(settings_update: SettingsRootDTO):
     
-
-@app.get("/sanctionsandwatchlist/risk_analysis_all")
-def analyze_all_sanctions_and_watchlist_risk():
-   
-    try:
-        result = start_sanction_watchlist_risk_analysis_service()
-        return result
-    except Exception as e:
-        print(e)
-        raise HTTPException(status_code=500, detail=f"Internal Server Error during sanctions and watchlist risk analysis: {e}")
-
-def main():
-    from app.model.transaction import Transaction
-
-    tm = TransactionRepository(test_database)
-    df = tm.get_pandas_df()
-    d = 1
-    tmm = TransactionRelatedRisk(df, 
-        Transaction(
-            TRANSACTIONID = df.iloc[d]['TRANSACTIONID'],
-            REPORTNO= str(df.iloc[d]['REPORTNO']),
-            REPORTDATE= str(df.iloc[d]['REPORTDATE']),
-            BRANCHID= int(df.iloc[d]['BRANCHID']),
-            BRANCHNAME= str(df.iloc[d]['BRANCHNAME']),
-            TRANSACTIONDATE= str(df.iloc[d]['TRANSACTIONDATE']),
-            TRANSACTIONTIME= str(df.iloc[d]['TRANSACTIONTIME']),
-            TRANSACTIONTYPE= str(df.iloc[d]['TRANSACTIONTYPE']),
-            CONDUCTINGMANNER= str(df.iloc[d]['CONDUCTINGMANNER']),
-            CURRENCYTYPE= str(df.iloc[d]['CURRENCYTYPE']),
-            AMOUNTINBIRR= float(df.iloc[d]['AMOUNTINBIRR']),
-            AMOUNTINCURRENCY= float(df.iloc[d]['AMOUNTINCURRENCY']),
-            FULL_NAME= str(df.iloc[d]['FULL_NAME']),
-            OTHERNAME= str(df.iloc[d]['OTHERNAME']),
-            SEX= str(df.iloc[d]['SEX']),
-            BIRTHDATE= str(df.iloc[d]['BIRTHDATE']),
-            IDCARDNO= str(df.iloc[d]['IDCARDNO']),
-            PASSPORTNO= str(df.iloc[d]['PASSPORTNO']),  
-            PASSPORTISSUEDBY= str(df.iloc[d]['PASSPORTISSUEDBY']),
-            RESIDENCECOUNTRY= str(df.iloc[d]['RESIDENCECOUNTRY']),
-            ORIGINCOUNTRY= str(df.iloc[d]['ORIGINCOUNTRY']),
-            OCCUPATION= str(df.iloc[d]['OCCUPATION']),
-            COUNTRY= str(df.iloc[d]['COUNTRY']),
-            REGION= str(df.iloc[d]['REGION']),
-            CITY= str(df.iloc[d]['CITY']),
-            SUBCITY= str(df.iloc[d]['SUBCITY']),
-            WOREDA= str(df.iloc[d]['WOREDA']),
-            HOUSENO= str(df.iloc[d]['HOUSENO']),
-            POSTALCODE=(str(df.iloc[d]['POSTALCODE'])),
-            BUSINESSMOBILENO= str(df.iloc[d]['BUSINESSMOBILENO']),
-            BUSSINESSTELNO= str(df.iloc[d]['BUSSINESSTELNO']),
-            BUSINESSFAXNO= str(df.iloc[d]['BUSINESSFAXNO']),
-            RESIDENCETELNO= str(df.iloc[d]['RESIDENCETELNO']),
-            EMAILADDRESS= str(df.iloc[d]['EMAILADDRESS']),
-            ACCOUNTNO= str(df.iloc[d]['ACCOUNTNO']),
-            ACCHOLDERBRANCH= str(df.iloc[d]['ACCHOLDERBRANCH']),
-            ACCOWNERNAME= str(df.iloc[d]['ACCOWNERNAME']),
-            ACCOUNTTYPE= str(df.iloc[d]['ACCOUNTTYPE']),
-            OPENEDDATE= str(df.iloc[d]['OPENEDDATE']),
-            BALANCEHELD= float(df.iloc[d]['BALANCEHELD']),
-            BALANCEHELDDATE= str(df.iloc[d]['BALANCEHELDDATE']),
-            CLOSEDDATE= str(df.iloc[d]['CLOSEDDATE']),
-            BENFULLNAME= str(df.iloc[d]['BENFULLNAME']),
-            BENACCOUNTNO= str(df.iloc[d]['BENACCOUNTNO']),
-            BENBRANCHID= int(df.iloc[d]['BENBRANCHID']),
-            BENBRANCHNAME= str(df.iloc[d]['BENBRANCHNAME']),
-            BENOWNERENTITY= str(df.iloc[d]['BENOWNERENTITY']),
-            BENCOUNTRY= str(df.iloc[d]['BENCOUNTRY']),
-            BENREGION= str(df.iloc[d]['BENREGION']),
-            BENCITY= str(df.iloc[d]['BENCITY']),
-            BENZONE= str(df.iloc[d]['BENZONE']),
-            BENWOREDA= str(df.iloc[d]['BENWOREDA']),
-            BENHOUSENO= str(df.iloc[d]['BENHOUSENO']),
-            BENTELNO= str(df.iloc[d]['BENTELNO']),
-            BENISENTITY= int(df.iloc[d]['BENISENTITY'])
-
-        )
-    )
+    provided_updates = settings_update.model_dump(exclude_none=True)
+    
+    result = update_configuration(provided_updates)
+    
+    return {"message": "Settings received for update", "changes": result}
     
 if __name__ == "__main__":
-    main()
+    pass

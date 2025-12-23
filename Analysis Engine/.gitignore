@@ -1,0 +1,4 @@
+__pycache__
+.venv
+.vscode
+kv_store.db

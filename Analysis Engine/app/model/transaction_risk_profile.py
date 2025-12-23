@@ -33,4 +33,14 @@ class TransactionRiskProfile(Base):
     overall_risk_score: Mapped[Optional[float]] = mapped_column()
     risk_level: Mapped[Optional[str]] = mapped_column()
     reason_codes: Mapped[Optional[str]] = mapped_column()
+
+    from_account : Mapped[str] = mapped_column()
+    from_name : Mapped[str] = mapped_column()
+    to_account : Mapped[str] = mapped_column()
+    to_name : Mapped[str] = mapped_column()
+    amount : Mapped[float] = mapped_column()
+    transaction_type : Mapped[str] = mapped_column()
+    transaction_time : Mapped[str] = mapped_column()
+
+
     generated_at: datetime = Column(DateTime, default=datetime.now)

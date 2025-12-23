@@ -14,9 +14,10 @@ class CustomerRiskProfile(Base):
     PEER_PROFILE_OCCUPATION: Mapped[str] = mapped_column()
     PEER_PROFILE_REGION: Mapped[str] = mapped_column()
     PEER_PROFILE_ACCOUNT_AGE: Mapped[str] = mapped_column()
+    TIME_SERIES_GAP: Mapped[str] = mapped_column()
     KYC_INTEGRITY_UNIQUENESS: Mapped[str] = mapped_column()   
     KYC_INTEGRITY_COMPLETENESS_RATIO: Mapped[float] = mapped_column()        
-    DEMOGRAPHICS_RISK: Mapped[float] = mapped_column()
+    DEMOGRAPHICS_RISK: Mapped[str] = mapped_column()
     SANCTION_HITS: Mapped[str] = mapped_column()
     WATCHLIST_HITS: Mapped[str] = mapped_column()
     PEP_HITS: Mapped[str] = mapped_column()
@@ -30,11 +31,8 @@ class CustomerRiskProfile(Base):
     CREATED_AT: Mapped[str] = mapped_column()
     UPDATED_AT: Mapped[str] = mapped_column()
 
-    @classmethod
-    def from_db_row(cls, row: tuple) -> 'CustomerRiskProfile':
-        return cls(*row)
+    account_age: Mapped[str] = mapped_column()
+    occupation: Mapped[str] = mapped_column() 
+    region: Mapped[str] = mapped_column()
 
-
-
-#CUSTOMER_TYPE_RISK: float   
-#TRANSACTION_HISTORY_RISK: float
+    

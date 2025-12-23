@@ -10,12 +10,14 @@ import {
   TrendingUp, Activity, FileWarning, Fingerprint, History 
 } from 'lucide-react';
 
+import { fetchCustomers } from '../services/database';
+
 interface CustomerRiskMonitorProps {
   customers: Customer[];
   targetCustomerId?: string | null;
 }
 
-export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ customers, targetCustomerId }) => {
+export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ customers, targetCustomerId, updateCustomers, count }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [filterText, setFilterText] = useState('');
 
@@ -26,6 +28,7 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
     }
   }, [targetCustomerId]);
 
+  /*
   // Sort by risk score desc
   const sortedCustomers = useMemo(() => {
     return [...customers]
@@ -35,116 +38,192 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
       )
       .sort((a, b) => b.riskScore - a.riskScore);
   }, [customers, filterText]);
+  */
+
+  function useDebounce(value, delay) {
+      const [debouncedValue, setDebouncedValue] = useState(value);
+  
+      useEffect(() => {
+        const handler = setTimeout(() => {
+          setDebouncedValue(value);
+        }, delay);
+  
+        return () => {
+          clearTimeout(handler);
+        };
+      }, [value, delay]); 
+  
+      return debouncedValue;
+    }
+  
+  
+    const debouncedFilterText = useDebounce(filterText, 500);
+  
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+    
+    useEffect(() => {
+      async function getData(){
+        const offset = (currentPage - 1) * itemsPerPage;
+        const data = await fetchCustomers({
+          limit: itemsPerPage,
+          offset: offset,
+          search: debouncedFilterText
+        });
+  
+        updateCustomers(data)
+  
+      }
+      getData();    
+    
+  }, [currentPage, debouncedFilterText]);
+
+  useEffect(()=>{
+    setCurrentPage(1)
+  }, [debouncedFilterText])
+ 
+  const sortedCustomers = customers;
 
   const selectedCustomer = useMemo(() => {
     if (selectedCustomerId) {
-      const found = customers.find(c => c.id === selectedCustomerId);
+      const found = customers.find(c => c.Profile_ID === selectedCustomerId);
       if (found) return found;
     }
     return sortedCustomers[0];
   }, [customers, selectedCustomerId, sortedCustomers]);
 
+  
   // Mock Historical Data for Gap Analysis (Time Series)
   const gapAnalysisData = useMemo(() => {
     if (!selectedCustomer) return [];
     const data = [];
-    const points = 12; // 12 months
-    const isZombie = selectedCustomer.tags.includes("Zombie Account");
     
-    for (let i = 0; i < points; i++) {
-      let value = Math.random() * 50 + 20; // Normal activity
-      
-      // Simulate Gap
-      if (isZombie) {
-        if (i > 2 && i < 10) value = 0; // Dormant period
-        if (i >= 10) value = Math.random() * 100 + 100; // Sudden spike
-      } else {
-        // Normal random fluctuation
-        value = selectedCustomer.avgTransactionValue / 100 * (0.8 + Math.random() * 0.4);
-      }
-
+    for(let i = 0; i < selectedCustomer.TIME_SERIES_GAP.TIMESTAMP.length; i++){
       data.push({
-        month: `M-${i+1}`,
-        activity: Math.floor(value),
-        threshold: 10 // Activity threshold
+        month: `t-${i}`,
+        activity: selectedCustomer.TIME_SERIES_GAP.TIME_DIFF[i],
+        threshold: 1200
       });
     }
+
+    
+    
+    console.log("Time gap: ", data)
     return data;
   }, [selectedCustomer]);
+  
 
   // Peer Comparison Data
   const peerData = useMemo(() => {
     if (!selectedCustomer) return [];
     return [
       {
-        metric: 'Avg Tx Value',
-        Customer: Math.floor(selectedCustomer.avgTransactionValue),
-        'Peer Average': Math.floor(selectedCustomer.peerGroupAvgTransactionValue),
+        metric: 'Peer Occupation',
+        Customer: Math.floor(selectedCustomer.PEER_PROFILE_OCCUPATION.amount),
+        'Peer Average': Math.floor(selectedCustomer.PEER_PROFILE_OCCUPATION.peer_average),
       },
       {
-        metric: 'Risk Score',
-        Customer: selectedCustomer.riskScore,
-        'Peer Average': 45, // Hypothetical avg
+        metric: 'Peer Region',
+        Customer: selectedCustomer.PEER_PROFILE_REGION.amount,
+        'Peer Average': Math.floor(selectedCustomer.PEER_PROFILE_OCCUPATION.peer_average)
+      },
+      {
+        metric: 'Peer Account Age',
+        Customer: selectedCustomer.PEER_PROFILE_ACCOUNT_AGE.amount,
+        'Peer Average': Math.floor(selectedCustomer.PEER_PROFILE_ACCOUNT_AGE.peer_average)
       }
     ];
   }, [selectedCustomer]);
 
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[calc(100vh-140px)]">
       
-      {/* Sidebar List */}
+      {/* Sidebar List with Pagination */}
       <div className="lg:col-span-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg flex flex-col overflow-hidden shadow-sm">
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 space-y-3">
           <h2 className="text-lg font-semibold flex items-center gap-2 text-slate-900 dark:text-slate-100">
             <Users className="w-5 h-5 text-blue-500" />
-            Risk Profiles
+            Risk Profiles ({count})
           </h2>
           <div className="relative">
             <Search className="absolute left-2 top-2.5 w-4 h-4 text-slate-500" />
-            <input 
-              type="text" 
-              placeholder="Search Customer..." 
+            <input
+              type="text"
+              placeholder="Search Customer..."
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded pl-8 pr-2 py-2 text-sm focus:outline-none focus:border-blue-500 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500"
               value={filterText}
               onChange={(e) => setFilterText(e.target.value)}
             />
           </div>
         </div>
+
+        {/* Customer List Container */}
         <div className="overflow-auto flex-1 p-2 space-y-2">
+          {/* NOTE: You would likely fetch a *paginated* list of customers (e.g., `paginatedCustomers`) 
+            here instead of filtering/sorting the full list (`sortedCustomers`).
+          */}
           {sortedCustomers.map(customer => (
-            <div 
-              key={customer.id}
-              onClick={() => setSelectedCustomerId(customer.id)}
+            <div
+              key={customer.Profile_ID}
+              onClick={() => setSelectedCustomerId(customer.Profile_ID)}
               className={`p-3 rounded border cursor-pointer transition-all ${
-                selectedCustomer?.id === customer.id 
-                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 shadow-sm' 
+                selectedCustomer?.Profile_ID === customer.Profile_ID
+                  ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-500 shadow-sm'
                   : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-400 dark:hover:border-slate-600'
               }`}
             >
               <div className="flex justify-between items-start mb-2">
-                <span className="font-medium text-slate-900 dark:text-slate-200 truncate">{customer.name}</span>
-                <RiskBadge level={customer.riskLevel} />
+                <span className="font-medium text-slate-900 dark:text-slate-200 truncate">{customer.Full_Name}</span>
+                <RiskBadge level={customer.RISK_LEVEL} />
               </div>
               <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-                <span className="font-mono">{customer.id}</span>
+                <span className="font-mono">{customer.Account_No}</span>
                 <span>•</span>
                 <span>{customer.occupation}</span>
               </div>
               {/* Mini Indicators */}
               <div className="flex gap-2">
-                {customer.isSanctioned && (
+                {(customer.SANCTION_HITS.account_sanction_hit || customer.SANCTION_HITS.beneficiary_sanction_hit) && (
                   <span className="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">SANCTION</span>
                 )}
-                {customer.tags.includes("Zombie Account") && (
-                   <span className="text-[10px] bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-1.5 py-0.5 rounded flex items-center gap-1">
+                {
+                  customer.REASON_CODES_JSON.includes("Zombie Account") && (
+                    <span className="text-[10px] bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300 border border-purple-200 dark:border-purple-800 px-1.5 py-0.5 rounded flex items-center gap-1">
                       <Activity className="w-3 h-3" /> Zombie
-                   </span>
-                )}
+                    </span>
+                  )
+                }
               </div>
             </div>
           ))}
         </div>
+
+        {/* Pagination Controls */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex justify-between items-center">
+          <button
+            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} 
+            disabled={currentPage === 1} 
+            className="px-3 py-1 text-sm rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 disabled:opacity-50 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            Previous
+          </button>
+          
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Page {currentPage}
+          </span>
+          
+          <button
+            
+            onClick={() => setCurrentPage(prev => prev + 1)} 
+            // disabled={!hasNextPage}
+            className="px-3 py-1 text-sm rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 disabled:opacity-50 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+          >
+            Next
+          </button>
+        </div>
       </div>
+
 
       {/* Main Dashboard */}
       <div className="lg:col-span-3 space-y-6 overflow-auto pr-2">
@@ -155,26 +234,26 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                   <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                    {selectedCustomer.name}
-                    {selectedCustomer.isSanctioned && (
+                    {selectedCustomer.Full_Name}
+                    {selectedCustomer.SANCTION_HITS.account_sanction_hit && (
                       <span className="flex items-center gap-1 bg-red-600 text-white text-xs px-3 py-1 rounded-full animate-pulse">
                         <AlertOctagon className="w-3 h-3" /> MATCH FOUND
                       </span>
                     )}
                   </h1>
                   <div className="flex items-center gap-4 mt-2 text-sm text-slate-500 dark:text-slate-400">
-                    <span className="flex items-center gap-1"><Fingerprint className="w-4 h-4" /> {selectedCustomer.id}</span>
+                    <span className="flex items-center gap-1"><Fingerprint className="w-4 h-4" /> {selectedCustomer.Account_No}</span>
                     <span className="flex items-center gap-1"><Users className="w-4 h-4" /> {selectedCustomer.occupation}</span>
-                    <span className="flex items-center gap-1"><History className="w-4 h-4" /> Account Age: {selectedCustomer.accountAgeDays} days</span>
+                    <span className="flex items-center gap-1"><History className="w-4 h-4" /> Account Age: {selectedCustomer.account_age} days</span>
                   </div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm text-slate-500 dark:text-slate-400 mb-1">Composite Risk Score</div>
                   <div className={`text-3xl font-bold font-mono ${
-                    selectedCustomer.riskScore > 80 ? 'text-red-600 dark:text-red-500' : 
-                    selectedCustomer.riskScore > 50 ? 'text-orange-600 dark:text-orange-500' : 'text-green-600 dark:text-green-500'
+                    selectedCustomer.RISK_SCORE > 80 ? 'text-red-600 dark:text-red-500' : 
+                    selectedCustomer.RISK_SCORE > 50 ? 'text-orange-600 dark:text-orange-500' : 'text-green-600 dark:text-green-500'
                   }`}>
-                    {selectedCustomer.riskScore}/100
+                    {selectedCustomer.RISK_SCORE}/100
                   </div>
                 </div>
               </div>
@@ -211,9 +290,13 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
                   </ResponsiveContainer>
                 </div>
                 <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-950 p-2 rounded">
-                  Analysis: Customer transaction value deviates by <span className="text-red-600 dark:text-red-400 font-bold">{Math.abs((selectedCustomer.avgTransactionValue - selectedCustomer.peerGroupAvgTransactionValue) / selectedCustomer.peerGroupAvgTransactionValue * 100).toFixed(0)}%</span> from peer group baseline.
+                  Analysis: Customer transaction value deviates by <span className="text-red-600 dark:text-red-400 font-bold">
+                    {Math.abs((selectedCustomer.PEER_PROFILE_OCCUPATION.amount - selectedCustomer.PEER_PROFILE_OCCUPATION.peer_average) / selectedCustomer.PEER_PROFILE_OCCUPATION.peer_average * 100).toFixed(0)
+                    }
+                  %</span> from peer group baseline.
                 </div>
               </div>
+
 
               {/* 2. Time Series Gap Analysis */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm">
@@ -238,13 +321,15 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
-                  {selectedCustomer.tags.includes("Zombie Account") && (
+                  {false && (
                      <div className="mt-2 flex items-center gap-2 text-xs text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 p-2 rounded">
                         <Activity className="w-4 h-4" />
                         <span>Alert: Account dormant for 6+ months then sudden high-value activity.</span>
                      </div>
                   )}
               </div>
+
+              
 
               {/* 3. KYC Integrity */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm">
@@ -261,14 +346,14 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
                       <svg className="w-full h-full" viewBox="0 0 100 100">
                         <circle cx="50" cy="50" r="45" fill="none" stroke="#e2e8f0" strokeWidth="10" className="dark:stroke-slate-800" />
                         <circle 
-                          cx="50" cy="50" r="45" fill="none" stroke={selectedCustomer.kycIntegrity > 0.9 ? "#10b981" : "#eab308"} strokeWidth="10"
-                          strokeDasharray={`${selectedCustomer.kycIntegrity * 283} 283`}
+                          cx="50" cy="50" r="45" fill="none" stroke={selectedCustomer.KYC_INTEGRITY_COMPLETENESS_RATIO > 0.9 ? "#10b981" : "#eab308"} strokeWidth="10"
+                          strokeDasharray={`${selectedCustomer.KYC_INTEGRITY_COMPLETENESS_RATIO * 283} 283`}
                           transform="rotate(-90 50 50)"
                           className="transition-all duration-1000 ease-out"
                         />
                       </svg>
                       <div className="absolute inset-0 flex items-center justify-center flex-col">
-                        <span className="text-2xl font-bold text-slate-900 dark:text-white">{(selectedCustomer.kycIntegrity * 100).toFixed(0)}%</span>
+                        <span className="text-2xl font-bold text-slate-900 dark:text-white">{(selectedCustomer.KYC_INTEGRITY_COMPLETENESS_RATIO * 100).toFixed(0)}%</span>
                         <span className="text-[10px] text-slate-500">Score</span>
                       </div>
                    </div>
@@ -279,21 +364,23 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
                       <span className="text-green-600 dark:text-green-400">Passed</span>
                    </div>
                    <div className="flex justify-between p-2 bg-slate-50 dark:bg-slate-950 rounded">
-                      <span className="text-slate-500">Address Match</span>
-                      <span className={selectedCustomer.kycIntegrity > 0.85 ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}>
-                        {selectedCustomer.kycIntegrity > 0.85 ? "Verified" : "Partial"}
+                      <span className="text-slate-500">KYC Completness</span>
+                      <span className={selectedCustomer.KYC_INTEGRITY_COMPLETENESS_RATIO > 0.85 ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}>
+                        {selectedCustomer.KYC_INTEGRITY_COMPLETENESS_RATIO > 0.85 ? "Complete" : "Partial"}
                       </span>
                    </div>
                    <div className="flex justify-between p-2 bg-slate-50 dark:bg-slate-950 rounded">
-                      <span className="text-slate-500">UBO Declared</span>
-                      <span className="text-green-600 dark:text-green-400">Yes</span>
+                      <span className="text-slate-500">fullname_matches</span>
+                      <span className="text-green-600 dark:text-green-400">{selectedCustomer.KYC_INTEGRITY_UNIQUENESS.fullname_matches}</span>
                    </div>
                    <div className="flex justify-between p-2 bg-slate-50 dark:bg-slate-950 rounded">
-                      <span className="text-slate-500">Doc Expiry</span>
-                      <span className="text-slate-700 dark:text-slate-200">2028</span>
+                      <span className="text-slate-500">ID Match</span>
+                      <span className="text-slate-700 dark:text-slate-200">{selectedCustomer.KYC_INTEGRITY_UNIQUENESS.idcard_matches}</span>
                    </div>
                 </div>
               </div>
+
+
 
               {/* 4. Sanctions & Watchlist */}
               <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg p-5 shadow-sm relative overflow-hidden">
@@ -302,16 +389,16 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
                     <ShieldCheck className="w-5 h-5 text-red-500 dark:text-red-400" />
                     Sanction & Watchlist
                   </h3>
-                  <p className="text-xs text-slate-500">Global compliance database match</p>
+                  <p className="text-xs text-slate-500">Sanction and Watchlist Database match</p>
                 </div>
                 
-                {selectedCustomer.isSanctioned ? (
+                {selectedCustomer.SANCTION_HITS.account_sanction_hit ? (
                   <div className="h-full flex flex-col justify-center items-center text-center z-10 relative pb-10">
                      <div className="w-16 h-16 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center mb-4 animate-pulse">
                         <AlertOctagon className="w-8 h-8 text-red-500" />
                      </div>
                      <h4 className="text-xl font-bold text-red-500">POSITIVE MATCH</h4>
-                     <p className="text-sm text-red-600 dark:text-red-300 mt-2">Entity appears on OFAC/SDN List</p>
+                     <p className="text-sm text-red-600 dark:text-red-300 mt-2">Entity appears on Sanction and Watch List</p>
                      <div className="mt-6 w-full">
                        <button className="w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded font-medium text-sm transition-colors">
                          Generate SAR Report
@@ -324,17 +411,21 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
                         <ShieldCheck className="w-8 h-8 text-green-500" />
                      </div>
                      <h4 className="text-lg font-bold text-green-500">CLEAN STATUS</h4>
-                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">No matches found in global databases.</p>
+                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">No matches found in our databases.</p>
                      <div className="mt-6 text-xs text-slate-500">
                         Last screened: {new Date().toLocaleDateString()}
                      </div>
                   </div>
                 )}
               </div>
+
+
+
             </div>
-          </>
-        )}
-      </div>
+        </>
+      )}
+    </div>
+
     </div>
   );
 };

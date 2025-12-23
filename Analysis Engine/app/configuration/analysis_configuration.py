@@ -18,16 +18,16 @@ def get_customer_analysis_settings():
 
 
 def set_customer_analysis_settings(analysis_parameters):
-    configuration.set("Peer Group Analysis", analysis_parameters.get('Peer Group Analysis', ''))
-    configuration.set("Peer Group Analysis Threshold", analysis_parameters.get('Peer Group Analysis Threshold', ''))
-    configuration.set("Anomaly Detection", analysis_parameters.get('Anomaly Detection', ''))
-    configuration.set("Anomaly Detection Sensitivity", analysis_parameters.get('Anomaly Detection Sensitivity', ''))
-    configuration.set("Time Gap Analysis", analysis_parameters.get('Time Gap Analysis', ''))
-    configuration.set("Time Gap Threshold Seconds", analysis_parameters.get('Time Gap Threshold Seconds', ''))
-    configuration.set("KYC Integrity Check", analysis_parameters.get('KYC Integrity Check', ''))
-    configuration.set("Sanctions List Check", analysis_parameters.get('Sanctions List Check', ''))
-    configuration.set("Watchlist Check", analysis_parameters.get('Watchlist Check', ''))
-    configuration.set("Geographic Risk Assessment", analysis_parameters.get('Geographic Risk Assessment', ''))
+    configuration.set("Peer Group Analysis", analysis_parameters.get('Peer_Group_Analysis', ''))
+    configuration.set("Peer Group Analysis Threshold", analysis_parameters.get('Peer_Group_Analysis_Threshold', ''))
+    configuration.set("Anomaly Detection", analysis_parameters.get('Anomaly_Detection', ''))
+    configuration.set("Anomaly Detection Sensitivity", analysis_parameters.get('Anomaly_Detection_Sensitivity', ''))
+    configuration.set("Time Gap Analysis", analysis_parameters.get('Time_Gap_Analysis', ''))
+    configuration.set("Time Gap Threshold Seconds", analysis_parameters.get('Time_Gap_Threshold_Seconds', ''))
+    configuration.set("KYC Integrity Check", analysis_parameters.get('KYC_Integrity_Check', ''))
+    configuration.set("Sanctions List Check", analysis_parameters.get('Sanctions_List_Check', ''))
+    configuration.set("Watchlist Check", analysis_parameters.get('Watchlist_Check', ''))
+    configuration.set("Geographic Risk Assessment", analysis_parameters.get('Geographic_Risk_Assessment', ''))
 
     return {
         "message": "success",
@@ -47,12 +47,12 @@ def get_transaction_analysis_settings():
 
 
 def set_transaction_analysis_settings(analysis_parameters):
-    configuration.set("Transaction Amount Analysis", analysis_parameters.get('Transaction Amount Analysis', ''))
-    configuration.set("Transaction Frequency Analysis", analysis_parameters.get('Transaction Frequency Analysis', ''))
-    configuration.set("Transaction Turnover Analysis", analysis_parameters.get('Transaction Turnover Analysis', ''))
-    configuration.set("BrentFord Digit Analysis", analysis_parameters.get('BrentFord Digit Analysis', ''))
-    configuration.set("Round Number Hoarding Analysis", analysis_parameters.get('Round Number Hoarding Analysis', ''))
-    configuration.set("Transaction Geographic Analysis", analysis_parameters.get('Transaction Geographic Analysis', ''))
+    configuration.set("Transaction Amount Analysis", analysis_parameters.get('Transaction_Amount_Analysis', ''))
+    configuration.set("Transaction Frequency Analysis", analysis_parameters.get('Transaction_Frequency_Analysis', ''))
+    configuration.set("Transaction Turnover Analysis", analysis_parameters.get('Transaction_Turnover_Analysis', ''))
+    configuration.set("BrentFord Digit Analysis", analysis_parameters.get('BrentFord_Digit_Analysis', ''))
+    configuration.set("Round Number Hoarding Analysis", analysis_parameters.get('Round Number_Hoarding_Analysis', ''))
+    configuration.set("Transaction Geographic Analysis", analysis_parameters.get('Transaction_Geographic_Analysis', ''))
 
     return {
         "message": "success",

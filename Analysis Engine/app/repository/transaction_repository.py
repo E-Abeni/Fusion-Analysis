@@ -2,28 +2,36 @@ from app.model.transaction import Transaction
 from sqlalchemy.orm import Session
 from sqlalchemy import Table, MetaData, select, Column
 from sqlalchemy.exc import NoSuchTableError
-from app.database.database import get_engine
+from app.database.database import get_central_db_engine
 import pandas as pd
 from app.configuration.connections_configuration import get_database_connection_settings
 from app.configuration.schema_configuration import get_schema_configuration_settings
 
-engine = get_engine()
+engine = get_central_db_engine()
 METADATA = MetaData()
-table_name = get_database_connection_settings().get('table_name', 'transactions')
+table_name = get_database_connection_settings().get('database_table_name', 'transactions')
 schema = get_schema_configuration_settings()
+
+selected_columns = [
+        'TRANSACTIONDATE', 'TRANSACTIONTIME', 'BIRTHDATE', 'OPENEDDATE', 'CLOSEDDATE', 'AMOUNTINBIRR', 'ACCOUNTNO',
+        'BRANCHNAME', 'TRANSACTIONTYPE', 'BENACCOUNTNO', 'BENREGION', "IDCARDNO", "PASSPORTNO", "OCCUPATION",
+        "REGION", "FULL_NAME", "BENFULLNAME"
+    ]
+reverse_selected_columns = [schema.get(column_name, column_name) for column_name in selected_columns]
 
 
 try:
     table = Table(table_name, METADATA, autoload_with=engine)
-    print(f"✅ Table '{table_name}' metadata loaded successfully.")
+    cols_to_select = [table.c[col] for col in reverse_selected_columns if col in table.c]
+    print(f"[Transaction Repository] Table '{table_name}' metadata loaded successfully.")
     
 except NoSuchTableError:
-    print(f"❌ Error: Table '{table_name}' does not exist in the database.")
+    print(f"[Transaction Repository] Error: Table '{table_name}' does not exist in the database.")
 
 def get_all_transactions(pandas_df=False):
     with Session(engine) as session:
         #transactions = session.query(Transaction).all()
-        stmt = select(table)
+        stmt = select(*cols_to_select)
         result = session.execute(stmt)
         columns = result.keys()
         transactions = result.all()
@@ -94,5 +102,4 @@ def get_transactions_in_time_range(start_time, end_time):
 
 
 if __name__ == "__main__":
-    df = get_all_transactions_pandas_df()
-    print(df.head())
+    print(reverse_selected_columns)

@@ -1,0 +1,63 @@
+services:
+  analysis_engine:
+    build:
+      context: ./Analysis Engine
+      dockerfile: Dockerfile
+    
+    ports:
+      - "8000:8000"
+    
+    restart: always
+    container_name: analysis_engine
+    
+    networks:
+      - microservice-network
+
+  monitoring_service:
+    build:
+      context: ./Monitoring Service
+      dockerfile: Dockerfile
+    
+    ports:
+      - "3000:80"
+    
+    container_name: monitoring_service
+    
+    networks:
+      - microservice-network
+
+  database_backend:
+    build:
+      context: ./Database Backend
+      dockerfile: Dockerfile
+    
+    restart: always
+    ports:
+      - "3002:3002"
+    
+    container_name: database_backend
+    
+    networks:
+      - microservice-network
+
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - microservice-network
+
+volumes:
+  postgres_data:
+
+networks:
+  microservice-network:
+    driver: bridge 

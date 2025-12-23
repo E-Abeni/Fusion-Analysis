@@ -6,6 +6,7 @@ import { CustomerRiskMonitor } from './components/CustomerRiskMonitor';
 import { EngineStats, Transaction, Customer, STR, RiskLevel } from './types';
 import { generateTransaction, generateCustomer, generateSTR } from './services/mockDataService';
 import { LayoutDashboard, Activity, AlertTriangle, ShieldCheck, Menu, Users, Settings, Moon, Sun, ExternalLink } from 'lucide-react';
+import {get_transactions, get_customers} from "./services/database"
 
 enum View {
   DASHBOARD = 'DASHBOARD',
@@ -14,8 +15,10 @@ enum View {
   ALERTS = 'ALERTS'
 }
 
+
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
+
+  const [currentView, setCurrentView] = useState<View>(View.CUSTOMERS);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   
   // State
@@ -32,6 +35,16 @@ const App: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [strs, setStrs] = useState<STR[]>([]);
   const [volumeHistory, setVolumeHistory] = useState<{ time: string; count: number; riskScoreAvg: number }[]>([]);
+
+
+  const [transactionsCount, setTransactionsCount] = useState(0)
+  const [customersCount, setCustomersCount] = useState(0)
+
+  useEffect(()=>{
+    setTransactionsCount(p => transactions.length)
+    setCustomersCount(p => customers.length)
+
+  }, [transactions, customers])
 
   // Navigation state for deep linking
   const [targetCustomerId, setTargetCustomerId] = useState<string | null>(null);
@@ -57,13 +70,13 @@ const App: React.FC = () => {
       alert(`STR already exists for Transaction ${tx.id}`);
       return;
     }
-    const customer = customers.find(c => c.id === tx.customerId);
+    const customer = customers.find(c => c.id === 3);
     if (!customer) return;
 
     const newSTR = generateSTR(tx, customer);
-    newSTR.reason = "Manual Trigger by Analyst";
+    //newSTR.reason = "Manual Trigger by Analyst";
     setStrs(prev => [newSTR, ...prev]);
-    alert(`STR Generated successfully: ${newSTR.id}`);
+    //alert(`STR Generated successfully: ${newSTR.id}`);
   };
 
   const handleViewCustomerTimeline = (customerId: string) => {
@@ -71,79 +84,68 @@ const App: React.FC = () => {
     setCurrentView(View.CUSTOMERS);
   };
 
-  // Simulate Real-time Data Feed
+  async function set_transactions_and_customers(){
+    const t = await get_transactions()
+    const c = await get_customers()
+
+    setTransactions(prev => t)
+    setCustomers(prev => c)
+
+  }
+
+
   useEffect(() => {
-    // Initial Population
-    const initialCustomers = Array.from({ length: 25 }, generateCustomer);
-    setCustomers(initialCustomers);
+    
+    set_transactions_and_customers()
 
     const interval = setInterval(() => {
-      // 1. Pick a random customer
-      const customerIndex = Math.floor(Math.random() * initialCustomers.length);
-      const customer = initialCustomers[customerIndex];
       
-      // 2. Generate Transaction
-      const newTx = generateTransaction(customer);
-      
-      // 3. Update Transactions State (Keep last 100 for performance in UI)
-      setTransactions(prev => [newTx, ...prev].slice(0, 100));
-      
-      // 4. Update Stats
+      set_transactions_and_customers()
+
+      console.log("Fetched Transactions: ", get_transactions())
+      console.log("Fetched Customers: ", get_customers())
+
+
       setStats(prev => ({
         ...prev,
         transactionsProcessed: prev.transactionsProcessed + 1,
         messagesInQueue: Math.floor(Math.random() * 50),
         processingSpeed: 800 + Math.floor(Math.random() * 100),
-        flaggedCount: prev.flaggedCount + (newTx.riskLevel === RiskLevel.HIGH ? 1 : 0),
-        cpuUsage: Math.floor(Math.random() * 40) + 20, // 20-60%
-        ramUsage: Math.floor(Math.random() * 20) + 50  // 50-70%
+        flaggedCount: prev.flaggedCount + 1,
+        cpuUsage: Math.floor(Math.random() * 40) + 20, 
+        ramUsage: Math.floor(Math.random() * 20) + 50 
       }));
 
-      // 5. Check for STR Generation
-      if (newTx.riskLevel === RiskLevel.CRITICAL || (newTx.riskLevel === RiskLevel.HIGH && Math.random() > 0.5)) {
-        const newSTR = generateSTR(newTx, customer);
-        setStrs(prev => [newSTR, ...prev]);
-      }
-
-      // 6. Update Volume History (simulated 5-sec aggregation)
+  
       setVolumeHistory(prev => {
         const now = new Date();
         const timeStr = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
         const newPoint = {
           time: timeStr,
-          count: Math.floor(Math.random() * 50) + 100, // Simulated volume
-          riskScoreAvg: Math.floor(Math.random() * 30) + 20 // Simulated risk baseline
+          count: Math.floor(Math.random() * 50) + 100, 
+          riskScoreAvg: Math.floor(Math.random() * 30) + 20
         };
-        return [...prev, newPoint].slice(-20); // Keep last 20 points
+        return [...prev, newPoint].slice(-20);
       });
 
-      // 7. Simulate Live Customer Risk Updates (Drift)
-      setCustomers(prev => {
-        return prev.map((c, idx) => {
-          if (idx === customerIndex || Math.random() > 0.9) {
-             // Drastic change for demo purposes if triggered
-             const newScore = Math.min(100, Math.max(0, c.riskScore + (Math.random() > 0.5 ? 2 : -2)));
-             let level = RiskLevel.LOW;
-             if (newScore > 50) level = RiskLevel.MEDIUM;
-             if (newScore > 80) level = RiskLevel.HIGH;
-             if (newScore > 95) level = RiskLevel.CRITICAL;
-             
-             return { ...c, riskScore: Math.floor(newScore), riskLevel: level };
-          }
-          return c;
-        });
-      });
-
-    }, 2000); // New data every 2 seconds
+    }, 3000000); 
 
     return () => clearInterval(interval);
   }, []);
 
+  function updateTransactions(transactions){
+      setTransactions(transactions)
+  }
+
+  function updateCustomers(customers){
+    setCustomers(customers)
+  }
+
   return (
-    <div className="flex h-screen bg-slate-300 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans transition-colors duration-300">
+    <div className="flex h-screen bg-slate-300 dark:bg-slate-950 text-slate-100 dark:text-slate-100 font-sans transition-colors duration-300">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex flex-col hidden md:flex">
-        <div className="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
+      <aside className="w-64 border-r border-slate-700 dark:border-slate-800 bg-black dark:bg-slate-950 flex flex-col hidden md:flex">
+        <div className="p-6 flex items-center gap-3 border-b border-slate-700 dark:border-slate-800">
           <ShieldCheck className="w-8 h-8 text-blue-500" />
           <span className="text-xl font-bold tracking-tight">CTMS Fusion Analysis</span>
         </div>
@@ -151,7 +153,7 @@ const App: React.FC = () => {
         <nav className="flex-1 p-4 space-y-2">
           <button 
             onClick={() => setCurrentView(View.DASHBOARD)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === View.DASHBOARD ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200'}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === View.DASHBOARD ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-200 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200'}`}
           >
             <LayoutDashboard className="w-5 h-5" />
             Dashboard
@@ -159,7 +161,7 @@ const App: React.FC = () => {
           
           <button 
             onClick={() => setCurrentView(View.MONITOR)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === View.MONITOR ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200'}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === View.MONITOR ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-200 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200'}`}
           >
             <Activity className="w-5 h-5" />
             Live Monitor
@@ -167,7 +169,7 @@ const App: React.FC = () => {
 
           <button 
             onClick={() => setCurrentView(View.CUSTOMERS)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === View.CUSTOMERS ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200'}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === View.CUSTOMERS ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-200 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200'}`}
           >
             <Users className="w-5 h-5" />
             Customer Risk
@@ -175,7 +177,7 @@ const App: React.FC = () => {
           
           <button 
             onClick={() => setCurrentView(View.ALERTS)}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === View.ALERTS ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200'}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === View.ALERTS ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-200 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200'}`}
           >
             <AlertTriangle className="w-5 h-5" />
             <span className="flex-1 text-left">STR Alerts</span>
@@ -187,7 +189,7 @@ const App: React.FC = () => {
           </button>
         </nav>
 
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="p-4 border-t border-slate-700 dark:border-slate-800">
            {/* Theme Toggle */}
            <div className="flex justify-between items-center mb-4 px-2">
              <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Theme</span>
@@ -266,6 +268,8 @@ const App: React.FC = () => {
                   transactions={transactions} 
                   onGenerateSTR={handleGenerateSTR}
                   onViewTimeline={handleViewCustomerTimeline}
+                  updateTransactions={updateTransactions}
+                  count = {transactionsCount}
                 />
               </div>
             )}
@@ -274,6 +278,8 @@ const App: React.FC = () => {
               <CustomerRiskMonitor 
                 customers={customers} 
                 targetCustomerId={targetCustomerId}
+                updateCustomers={updateCustomers}
+                count = {customersCount}
               />
             )}
             

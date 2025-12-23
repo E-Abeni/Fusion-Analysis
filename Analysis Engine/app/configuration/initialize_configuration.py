@@ -34,11 +34,13 @@ def initialize_configuration():
         "database_type": "postgres",
         "database_username": "postgres",
         "database_password": "admin",
-        "database_host": "localhost",
+        #"database_host": "localhost",
+        "database_host": "postgres_db",
         "database_port": "5432",
         "database_name": "postgres",
         "table_name": "test_transactions",
-        "database_connection_string": "postgresql://postgres:admin@localhost:5432/postgres"
+        #"database_connection_string": "postgresql://postgres:admin@localhost:5432/postgres",
+        "database_connection_string": "postgresql://postgres:admin@postgres_db:5432/postgres"
 
     }
     bcs = {
@@ -51,15 +53,19 @@ def initialize_configuration():
         "engine_database_type": "postgres",
         "engine_username": "postgres",
         "engine_password": "admin",
-        "engine_host": "localhost",
+        #"engine_host": "localhost",
+        #"engine_host": "172.28.112.1",
+        "engine_host": "postgres_db",
         "engine_port": "5432",
         "engine_database_name": "postgres",
-        "engine_connection_string": "postgresql://postgres:admin@localhost:5432/postgres"
+        #"engine_connection_string": "postgresql://postgres:admin@localhost:5432/postgres",
+        #"engine_connection_string": "postgresql://postgres:admin@172.28.112.1:5432/postgres",
+        "engine_connection_string": "postgresql://postgres:admin@postgres_db:5432/postgres"
     }
     swcs = {
-        "sanctions_table_name": "ofac_sanctions",
-        "watchlist_table_name": "internal_watchlist",
-        "high_risk_countries_table_name": "high_risk_geographies"
+        "sanctions_table_name": "sanction_list",
+        "watchlist_table_name": "watch_list",
+        "high_risk_countries_table_name": "countries"
     }
     cc.set_database_connection_settings(dcs)
     cc.set_broker_connection_settings(bcs)

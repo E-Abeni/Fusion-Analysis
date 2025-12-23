@@ -10,7 +10,7 @@ class Transaction(Base):
     __tablename__ = get_database_connection_settings().get('table_name', 'transactions')
         
     ID: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    TRANSACTIONID: Mapped[int] = mapped_column()
+    TRANSACTIONID: Mapped[str] = mapped_column()
     REPORTNO: Mapped[Optional[str]] = mapped_column()
     REPORTDATE: Mapped[Optional[str]] = mapped_column()
     BRANCHID: Mapped[int] = mapped_column()

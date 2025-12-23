@@ -75,7 +75,7 @@ export const generateCustomer = (): Customer => {
   };
 };
 
-export const generateTransaction = (customer: Customer): Transaction => {
+export const generateTransaction = (customer: Customer)/*: Transaction */=> {
   const isHighRisk = customer.riskLevel === RiskLevel.HIGH || customer.riskLevel === RiskLevel.CRITICAL;
   const baseAmount = Math.random() * 50000;
   // Simulate structuring or round numbers if high risk
@@ -108,13 +108,15 @@ export const generateTransaction = (customer: Customer): Transaction => {
   };
 };
 
-export const generateSTR = (tx: Transaction, customer: Customer): STR => {
+export const generateSTR = (tx: Transaction, customer: Customer)/*: STR*/ => {
+  /*
   return {
     id: `STR-${Date.now()}`,
-    transactionId: tx.id,
+    //transactionId: tx.id,
     customerId: customer.id,
     generatedAt: new Date(),
     reason: `Automated Trigger: ${tx.flags.join(', ')}`,
     status: 'PENDING'
   };
+  */
 };

@@ -1,0 +1,7 @@
+.trash
+__pycache__
+.venv
+.vscode
+kv_store.db
+README.md
+Configuration Service

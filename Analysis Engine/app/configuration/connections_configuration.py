@@ -7,24 +7,24 @@ configuration = Configuration ("kv_store.db")
 def get_database_connection_settings():
     return {
         'database_type': configuration.get("database_type"),
-        'username': configuration.get("database_username"),
-        'password': configuration.get("database_password"),
-        'host': configuration.get("database_host"),
-        'port': configuration.get("database_port"),
+        'database_username': configuration.get("database_username"),
+        'database_password': configuration.get("database_password"),
+        'database_host': configuration.get("database_host"),
+        'database_port': configuration.get("database_port"),
         'database_name': configuration.get("database_name"),
-        'table_name': configuration.get("table_name"),
-        'connection_string': configuration.get("database_connection_string")
+        'database_table_name': configuration.get("table_name"),
+        'database_connection_string': configuration.get("database_connection_string")
     }
 
 def set_database_connection_settings(connection_parameters):
     configuration.set("database_type", connection_parameters.get('database_type', ''))
-    configuration.set("database_username", connection_parameters.get('username', ''))
-    configuration.set("database_password", connection_parameters.get('password', ''))
-    configuration.set("database_host", connection_parameters.get('host', ''))
-    configuration.set("database_port", connection_parameters.get('port', ''))
+    configuration.set("database_username", connection_parameters.get('database_username', ''))
+    configuration.set("database_password", connection_parameters.get('database_password', ''))
+    configuration.set("database_host", connection_parameters.get('database_host', ''))
+    configuration.set("database_port", connection_parameters.get('database_port', ''))
     configuration.set("database_name", connection_parameters.get('database_name', ''))
     configuration.set("table_name", connection_parameters.get('table_name', ''))
-    configuration.set("database_connection_string", connection_parameters.get('connection_string', ''))
+    configuration.set("database_connection_string", connection_parameters.get('database_connection_string', ''))
 
     return {
         "message": "success",

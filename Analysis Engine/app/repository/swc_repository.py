@@ -3,17 +3,28 @@ from app.model.watch_list import WatchListEntry
 from app.model.countries import Country
 from app.database.database import get_engine
 from sqlalchemy.orm import Session
+import pandas as pd
 
 engine = get_engine()
 
-def get_all_sanction_list_entries():
+def get_all_sanction_list_entries(pandas_df=False):
     with Session(engine) as session:
-        entries = session.query(SanctionListEntry).all()
+        entries = session.query(SanctionListEntry.FirstName, 
+                                SanctionListEntry.LastName).all()
+    if pandas_df:
+        data = [rp.__dict__ for rp in entries]
+        df = pd.DataFrame(data, columns=["FirstName", "LastName"])   
+        return df
     return entries
 
-def get_all_watch_list_entries():
+def get_all_watch_list_entries(pandas_df=False):
     with Session(engine) as session:
-        entries = session.query(WatchListEntry).all()
+        entries = session.query(WatchListEntry.FirstName,
+                                WatchListEntry.LastName).all()
+    if pandas_df:
+        data = [rp.__dict__ for rp in entries]
+        df = pd.DataFrame(data, columns=["FirstName", "LastName"])   
+        return df
     return entries
 
 
@@ -64,9 +75,13 @@ def update_watch_list_entry(entry):
 
 
 
-def get_all_countries():
+def get_all_countries(pandas_df=False):
     with Session(engine) as session:
-        countries = session.query(Country).all()
+        countries = session.query(Country.name, Country.risk_score).all()
+    if pandas_df:
+        data = [rp.__dict__ for rp in countries]
+        df = pd.DataFrame(data, columns=["name", "risk_score"])   
+        return df
     return countries
 
 def insert_country(country):
