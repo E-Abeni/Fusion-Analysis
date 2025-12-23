@@ -51,7 +51,7 @@ const risk_types = ["Zombie Account Activation ",
 
 
 export async function get_transactions(){
-    const response = await fetch("http://localhost:3002/api/transaction_risk_profiles")
+    const response = await fetch("http://database_backend:3002/api/transaction_risk_profiles")
 
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
@@ -93,7 +93,7 @@ export async function get_transactions(){
 
 
 export async function get_customers(){
-    const response = await fetch("http://localhost:3002/api/customer_risk_profiles")
+    const response = await fetch("http://database_backend:3002/api/customer_risk_profiles")
 
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
@@ -146,7 +146,7 @@ export async function get_customers(){
 
  
 export async function fetchTransactions(options) {
-  const BASE_URL = 'http://localhost:3002/api/transaction_risk_profiles/filter';
+  const BASE_URL = 'http://database_backend:3002/api/transaction_risk_profiles/filter';
   
   const params = new URLSearchParams();
 
@@ -209,7 +209,7 @@ export async function fetchTransactions(options) {
 
 
 export async function fetchCustomers(options) {
-  const BASE_URL = 'http://localhost:3002/api/customer_risk_profiles/filter';
+  const BASE_URL = 'http://database_backendbackendbackendbackendbackendbackend:3002/api/customer_risk_profiles/filter';
   
   const params = new URLSearchParams();
 
@@ -272,4 +272,94 @@ export async function fetchCustomers(options) {
     console.error('Error fetching customers:', error);
     throw error;
   }
+}
+
+
+export async function fetchTransactionCount(options){
+  
+  const BASE_URL = 'http://database_backendbackend:3002/api/transaction_risk_profiles/count';
+  
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(options)) {
+    if (value !== undefined && value !== null) {
+      params.append(key, String(value));
+    }
+  }
+
+  const url = `${BASE_URL}?${params.toString()}`;
+
+  //console.log(`Sending GET request to: ${url}`); 
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json()
+    .then((data) => {
+      return data[0]["count"]
+    })
+    .then(data => {
+      return Number(data)
+    })
+
+    return data;
+  
+  } catch (error) {
+    console.error('Error fetching customers:', error);
+    throw error;
+  }
+
+}
+
+export async function fetchCustomerCount(options){
+  const BASE_URL = 'http://database_backend:3002/api/customer_risk_profiles/count';
+  
+  const params = new URLSearchParams();
+
+  for (const [key, value] of Object.entries(options)) {
+    if (value !== undefined && value !== null) {
+      params.append(key, String(value));
+    }
+  }
+
+  const url = `${BASE_URL}?${params.toString()}`;
+
+  //console.log(`Sending GET request to: ${url}`); 
+
+  try {
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json()
+    .then((data) => {
+      return data[0]["count"]
+    })
+    .then(data => {
+      return Number(data)
+    })
+
+    return data;
+  
+  } catch (error) {
+    console.error('Error fetching customers:', error);
+    throw error;
+  }
+
 }

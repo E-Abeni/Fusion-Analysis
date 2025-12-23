@@ -36,12 +36,9 @@ const App: React.FC = () => {
   const [strs, setStrs] = useState<STR[]>([]);
   const [volumeHistory, setVolumeHistory] = useState<{ time: string; count: number; riskScoreAvg: number }[]>([]);
 
-
-  const [transactionsCount, setTransactionsCount] = useState(0)
   const [customersCount, setCustomersCount] = useState(0)
 
   useEffect(()=>{
-    setTransactionsCount(p => transactions.length)
     setCustomersCount(p => customers.length)
 
   }, [transactions, customers])
@@ -269,7 +266,6 @@ const App: React.FC = () => {
                   onGenerateSTR={handleGenerateSTR}
                   onViewTimeline={handleViewCustomerTimeline}
                   updateTransactions={updateTransactions}
-                  count = {transactionsCount}
                 />
               </div>
             )}

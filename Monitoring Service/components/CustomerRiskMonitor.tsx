@@ -10,7 +10,7 @@ import {
   TrendingUp, Activity, FileWarning, Fingerprint, History 
 } from 'lucide-react';
 
-import { fetchCustomers } from '../services/database';
+import { fetchCustomers, fetchCustomerCount } from '../services/database';
 
 interface CustomerRiskMonitorProps {
   customers: Customer[];
@@ -20,6 +20,9 @@ interface CustomerRiskMonitorProps {
 export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ customers, targetCustomerId, updateCustomers, count }) => {
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [filterText, setFilterText] = useState('');
+
+  const [pageCount, setPageCount] = useState(0);
+  const [customersCount, setTransactionsCount] = useState(0);
 
   // Handle prop-based selection (e.g. from navigation)
   useEffect(() => {
@@ -77,6 +80,20 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
       getData();    
     
   }, [currentPage, debouncedFilterText]);
+
+  async function update_counts(){
+      const all_customers = await fetchCustomerCount({
+        search: debouncedFilterText
+      });
+      setTransactionsCount(all_customers);
+      setPageCount(Math.ceil(all_customers/itemsPerPage))
+  
+    }
+     useEffect(() => {
+      
+      update_counts();
+      
+    },[debouncedFilterText])
 
   useEffect(()=>{
     setCurrentPage(1)
@@ -144,7 +161,7 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
         <div className="p-4 border-b border-slate-200 dark:border-slate-800 space-y-3">
           <h2 className="text-lg font-semibold flex items-center gap-2 text-slate-900 dark:text-slate-100">
             <Users className="w-5 h-5 text-blue-500" />
-            Risk Profiles ({count})
+            Risk Profiles ({customersCount})
           </h2>
           <div className="relative">
             <Search className="absolute left-2 top-2.5 w-4 h-4 text-slate-500" />
@@ -210,7 +227,7 @@ export const CustomerRiskMonitor: React.FC<CustomerRiskMonitorProps> = ({ custom
           </button>
           
           <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Page {currentPage}
+            Page {currentPage} of {pageCount}
           </span>
           
           <button

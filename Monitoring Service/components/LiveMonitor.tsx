@@ -3,7 +3,7 @@ import { Transaction, RiskLevel, TransactionType } from '../types';
 import { RiskBadge } from './ui/RiskBadge';
 import { Filter, Search, FileWarning, LineChart, Network, Info } from 'lucide-react';
 import {TransactionDetailsModal, useModal} from "./ui/TransactionDetailModal"
-import {fetchTransactions} from "../services/database"
+import {fetchTransactions, fetchTransactionCount} from "../services/database"
 
 
 interface LiveMonitorProps {
@@ -12,17 +12,17 @@ interface LiveMonitorProps {
   onViewTimeline: (customerId: string) => void;
 }
 
-export const LiveMonitor: React.FC<LiveMonitorProps> = ({ transactions, onGenerateSTR, onViewTimeline, updateTransactions, count }) => {
+export const LiveMonitor: React.FC<LiveMonitorProps> = ({ transactions, onGenerateSTR, onViewTimeline, updateTransactions }) => {
   const [filterText, setFilterText] = useState('');
   const [riskFilter, setRiskFilter] = useState<RiskLevel | 'ALL'>('ALL');
+
+  const [pageCount, setPageCount] = useState(0);
+  const [transactionsCount, setTransactionsCount] = useState(0);
 
   const [selectedTransaction, setSelectedTransaction] = useState({});
   const { isOpen, openModal, closeModal } = useModal();
 
-  useEffect(() => {
-    
-  },[filterText])
-  
+   
   /*
   const filtered = transactions.filter(tx => {
     const matchesText = tx.id.toLowerCase().includes(filterText.toLowerCase()) || 
@@ -59,8 +59,23 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ transactions, onGenera
   const debouncedFilterText = useDebounce(filterText, 500);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 15;
+  
   // const [hasNextPage, setHasNextPage] = useState(true); 
+
+  async function update_counts(){
+    const all_transactions = await fetchTransactionCount({
+      search: debouncedFilterText
+    });
+    setTransactionsCount(all_transactions);
+    setPageCount(Math.round(all_transactions/itemsPerPage))
+
+  }
+   useEffect(() => {
+    
+    update_counts();
+    
+  },[debouncedFilterText, riskFilter])
   
   useEffect(() => {
     async function getData(){
@@ -88,7 +103,7 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ transactions, onGenera
       <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
         <h2 className="text-lg font-semibold flex items-center gap-2 text-slate-900 dark:text-slate-100">
           <div className="w-2 h-2 rounded-full bg-red-500 animate-ping"></div>
-          Live Transaction Feed ({count})
+          Live Transaction Feed ({transactionsCount})
         </h2>
 
         <div className="flex gap-2 w-full md:w-auto">
@@ -228,7 +243,7 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ transactions, onGenera
         </button>
         
         <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-          Page {currentPage}
+          Page {currentPage} of {pageCount}
         </span>
         
         <button

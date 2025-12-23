@@ -10,9 +10,9 @@ const port = 3002;
 
 const pool = new Pool({
   user: process.env.PGUSER,
-  //host: process.env.PGHOST,
+  host: process.env.PGHOST,
   //host: "172.28.112.1",
-  host: "postgres_db",
+  //host: "postgres_db",
   database: process.env.PGDATABASE,
   password: process.env.PGPASSWORD,
   port: process.env.PGPORT,
@@ -51,7 +51,7 @@ app.listen(port, () => {
 
 
 
-function buildTransactionQuery(options, table_name) {
+function buildTransactionQuery(options, table_name, count=false) {
   
   const { limit, offset, search } = options;
   let whereClause = '';
@@ -75,11 +75,16 @@ function buildTransactionQuery(options, table_name) {
 
   let query = `
     SELECT 
-      * FROM 
+      ${count? "count(*)":"*"} FROM 
       "${table_name}"
-    ${whereClause} 
-    ORDER BY 
-      "generated_at" DESC 
+    ${whereClause}
+    ${
+      count? "" : `
+      ORDER BY 
+      "generated_at" DESC
+      `
+    } 
+     
   `;
 
   const limitValue = limit ? parseInt(limit, 10) : undefined;
@@ -91,7 +96,7 @@ function buildTransactionQuery(options, table_name) {
     parameterIndex++;
   } else {
     
-    query += ` LIMIT 10`;
+    //query += ` LIMIT 10`;
   }
 
   if (offsetValue !== undefined && !isNaN(offsetValue)) {
@@ -127,7 +132,29 @@ app.get('/api/transaction_risk_profiles/filter', async (req, res) => {
 });
 
 
-function buildCustomerQuery(options, table_name) {
+app.get('/api/transaction_risk_profiles/count', async (req, res) => {
+  const TABLE_NAME = "transaction_risk_profiles"
+  try {
+    const options = req.query;
+
+    const { query, values } = buildTransactionQuery(options, TABLE_NAME, count=true);
+    
+    //console.log('SQL Query:', query);
+    //console.log('SQL Values:', values);
+
+    const result = await pool.query(query, values);
+    
+    res.json(result.rows);
+
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
+
+
+
+function buildCustomerQuery(options, table_name, count=false) {
   
   const { limit, offset, search } = options;
   let whereClause = '';
@@ -151,11 +178,16 @@ function buildCustomerQuery(options, table_name) {
 
   let query = `
     SELECT 
-      * FROM 
+      ${count? "count(*)":"*"} FROM 
       "${table_name}"
-    ${whereClause} 
-    ORDER BY 
-      "UPDATED_AT" DESC 
+    ${whereClause}
+    ${
+      count? "" : `
+      ORDER BY 
+      "UPDATED_AT" DESC
+      `
+    } 
+     
   `;
 
   const limitValue = limit ? parseInt(limit, 10) : undefined;
@@ -167,7 +199,7 @@ function buildCustomerQuery(options, table_name) {
     parameterIndex++;
   } else {
     
-    query += ` LIMIT 10`;
+    //query += ` LIMIT 10`;
   }
 
   if (offsetValue !== undefined && !isNaN(offsetValue)) {
@@ -194,6 +226,27 @@ app.get('/api/customer_risk_profiles/filter', async (req, res) => {
     
     //console.log('SQL Query:', query);
     //console.log('SQL Values:', values);
+
+  
+    const result = await pool.query(query, values);
+    
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
+
+
+app.get('/api/customer_risk_profiles/count', async (req, res) => {
+  const TABLE_NAME = "customer_risk_profiles"
+  try {
+    const options = req.query;
+
+    const { query, values } = buildCustomerQuery(options, TABLE_NAME, count=true);
+    
+    console.log('SQL Query:', query);
+    console.log('SQL Values:', values);
 
   
     const result = await pool.query(query, values);
