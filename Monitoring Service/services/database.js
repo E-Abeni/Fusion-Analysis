@@ -209,7 +209,7 @@ export async function fetchTransactions(options) {
 
 
 export async function fetchCustomers(options) {
-  const BASE_URL = 'http://172.20.137.129backendbackendbackendbackendbackend:3002/api/customer_risk_profiles/filter';
+  const BASE_URL = 'http://172.20.137.129:3002/api/customer_risk_profiles/filter';
   
   const params = new URLSearchParams();
 
@@ -277,7 +277,7 @@ export async function fetchCustomers(options) {
 
 export async function fetchTransactionCount(options){
   
-  const BASE_URL = 'http://172.20.137.129backend:3002/api/transaction_risk_profiles/count';
+  const BASE_URL = 'http://172.20.137.129:3002/api/transaction_risk_profiles/count';
   
   const params = new URLSearchParams();
 
