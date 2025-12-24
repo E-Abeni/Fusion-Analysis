@@ -10,9 +10,9 @@ const port = 3002;
 
 const pool = new Pool({
   user: process.env.PGUSER,
-  //host: process.env.PGHOST,
+  host: process.env.PGHOST,
   //host: "172.28.112.1",
-  host: "postgres_db",
+  //host: "postgres_db",
   database: process.env.PGDATABASE,
   password: process.env.PGPASSWORD,
   port: process.env.PGPORT,
@@ -21,7 +21,7 @@ const pool = new Pool({
 
 
 app.use(cors());
-app.use(express.json()); // To parse JSON bodies
+app.use(express.json()); 
 
 
 app.get('/api/transaction_risk_profiles', async (req, res) => {
@@ -54,7 +54,7 @@ app.listen(port, () => {
 function buildTransactionQuery(options, table_name, count=false) {
   
   const { limit, offset, search, risk_filter } = options;
-  //console.log("Options: ", options)
+  console.log("Options: ", options)
   let whereClause = '';
   const values = [];
   let parameterIndex = 1; 
@@ -71,27 +71,28 @@ function buildTransactionQuery(options, table_name, count=false) {
                                           )
                                         ) 
                                   : undefined;
-    //console.log("RiskLevel: ", riskLevel, "Bool", riskLevel !== undefined)
+    console.log("RiskLevel: ", riskLevel, "Bool", riskLevel !== undefined)
 
     if (riskLevel !== undefined) {
-      //console.log("Entered....")
-      filterText += `OR "overall_risk_score" BETWEEN $${parameterIndex} and $${parameterIndex + 1}`;
+      console.log("Entered....")
+      filterText += `"overall_risk_score" BETWEEN $${parameterIndex} and $${parameterIndex + 1}`;
       values.push(riskLevel[0], riskLevel[1]);
       parameterIndex +=2 ;
     }
 
-    //console.log("FilterText: ", filterText)
+    console.log("FilterText: ", filterText)
 
 
 
-  if (search && search.trim().length > 0) {
+  if ((search && search.trim().length > 0) || riskLevel) {
     
     whereClause = `
       WHERE 
         (
+          ${riskLevel? filterText : "1"}
+          OR
           "from_name" ILIKE $${parameterIndex} OR 
           "from_account" ILIKE $${parameterIndex}
-          ${riskLevel? filterText : ""}
 
         )
     `;
@@ -152,8 +153,8 @@ app.get('/api/transaction_risk_profiles/filter', async (req, res) => {
 
     const { query, values } = buildTransactionQuery(options, TABLE_NAME);
     
-    //console.log('SQL Query:', query);
-    //console.log('SQL Values:', values);
+    console.log('SQL Query:', query);
+    console.log('SQL Values:', values);
 
     const result = await pool.query(query, values);
     
@@ -208,21 +209,22 @@ function buildCustomerQuery(options, table_name, count=false) {
                                   : undefined;
 
   if (riskLevel !== undefined) {
-    filterText += `OR "RISK_SCORE" BETWEEN $${parameterIndex} and $${parameterIndex + 1}`;
+    filterText += `"RISK_SCORE" BETWEEN $${parameterIndex} and $${parameterIndex + 1}`;
     values.push(riskLevel[0], riskLevel[1]);
     parameterIndex +=2;
   }
 
 
 
-  if (search && search.trim().length > 0) {
+  if ((search && search.trim().length > 0) || riskLevel) {
     
     whereClause = `
       WHERE 
         (
+          ${riskLevel? filterText : "1"}
+          OR
           "Full_Name" ILIKE $${parameterIndex} OR 
           "Account_No" ILIKE $${parameterIndex}
-          ${riskLevel? filterText : ""}
         )
     `;
     
