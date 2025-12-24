@@ -83,7 +83,8 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ transactions, onGenera
       const data = await fetchTransactions({
         limit: itemsPerPage,
         offset: offset,
-        search: debouncedFilterText
+        search: debouncedFilterText,
+        risk_filter: riskFilter
       });
 
       updateTransactions(data)
@@ -145,8 +146,8 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ transactions, onGenera
               <th className="p-3 font-medium">Account</th>
               <th className="p-3 font-medium">Type</th>
               <th className="p-3 font-medium text-right">Amount</th>
-              <th className="p-3 font-medium">Flags</th>
-              <th className="p-3 font-medium">Risk Score</th>
+              <th className="p-3 font-medium">To</th>
+              <th className="p-3 font-medium">Risk Level</th>
               <th className="p-3 font-medium text-center">Actions</th>
             </tr>
           </thead>
@@ -173,8 +174,7 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ transactions, onGenera
                 </td>
                 <td className="p-3">
                   <div className="flex flex-wrap gap-1 text-blue-500">
-                    {/* Assuming tx.reason_codes renders a list of flags */}
-                    {tx.reason_codes} 
+                    {tx.to_account} 
                   </div>
                 </td>
                 <td className="p-3">

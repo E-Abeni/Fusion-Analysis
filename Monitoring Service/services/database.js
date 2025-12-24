@@ -188,8 +188,8 @@ export async function fetchTransactions(options) {
                 //transaction_time : "Test Data"
             }
 
-            new_row.overall_risk_score = (new_row.frequency_24hr * new_row.amount) < 1000000 ? 40 : (new_row.frequency_24hr * new_row.amount) < 2000000 ? 60 : (new_row.frequency_24hr * new_row.amount) < 3000000 ? 80 : (new_row.frequency_24hr * new_row.amount) < 4000000 ? 90 : 100
-            new_row.risk_level = new_row.overall_risk_score < 50 ? "LOW" : new_row.overall_risk_score < 80 ? "MEDIUM" : "HIGH";
+            //new_row.overall_risk_score = (new_row.frequency_24hr * new_row.amount) < 1000000 ? 40 : (new_row.frequency_24hr * new_row.amount) < 2000000 ? 60 : (new_row.frequency_24hr * new_row.amount) < 3000000 ? 80 : (new_row.frequency_24hr * new_row.amount) < 4000000 ? 90 : 100
+            new_row.risk_level = new_row.overall_risk_score < 50 ? "LOW" : new_row.overall_risk_score < 70 ? "MEDIUM" :  new_row.overall_risk_score < 85 ? "HIGH" : "CRITICAL";
             new_row.reason_codes = new_row.overall_risk_score < 60 ? [] : new_row.reason_codes; //getRandomLengthSample(risk_types);
 	    //new_row.reason_codes = [];
             

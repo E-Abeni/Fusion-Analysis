@@ -10,9 +10,9 @@ const port = 3002;
 
 const pool = new Pool({
   user: process.env.PGUSER,
-  //host: process.env.PGHOST,
+  host: process.env.PGHOST,
   //host: "172.28.112.1",
-  host: "postgres_db",
+  //host: "postgres_db",
   database: process.env.PGDATABASE,
   password: process.env.PGPASSWORD,
   port: process.env.PGPORT,
@@ -53,10 +53,36 @@ app.listen(port, () => {
 
 function buildTransactionQuery(options, table_name, count=false) {
   
-  const { limit, offset, search } = options;
+  const { limit, offset, search, risk_filter } = options;
+  //console.log("Options: ", options)
   let whereClause = '';
   const values = [];
   let parameterIndex = 1; 
+
+  let filterText = "";
+
+  const riskLevel = risk_filter ? (risk_filter === "LOW" ? [0, 50] 
+                                    : (risk_filter === "MEDIUM" ? [50, 70] 
+                                        : (risk_filter === "HIGH" ? [70, 85] 
+                                            : (risk_filter === "CRITICAL" ? [85, 1000] 
+                                                : undefined
+                                              )
+                                            )
+                                          )
+                                        ) 
+                                  : undefined;
+    //console.log("RiskLevel: ", riskLevel, "Bool", riskLevel !== undefined)
+
+    if (riskLevel !== undefined) {
+      //console.log("Entered....")
+      filterText += `OR "overall_risk_score" BETWEEN $${parameterIndex} and $${parameterIndex + 1}`;
+      values.push(riskLevel[0], riskLevel[1]);
+      parameterIndex +=2 ;
+    }
+
+    //console.log("FilterText: ", filterText)
+
+
 
   if (search && search.trim().length > 0) {
     
@@ -65,6 +91,7 @@ function buildTransactionQuery(options, table_name, count=false) {
         (
           "from_name" ILIKE $${parameterIndex} OR 
           "from_account" ILIKE $${parameterIndex}
+          ${riskLevel? filterText : ""}
 
         )
     `;
@@ -79,10 +106,16 @@ function buildTransactionQuery(options, table_name, count=false) {
       "${table_name}"
     ${whereClause}
     ${
-      count? "" : `
+      count ? "" : 
+      riskLevel ? `
+      ORDER BY 
+      "overall_risk_score" DESC,
+      "generated_at" DESC
+      `:
+      `
       ORDER BY 
       "generated_at" DESC
-      `
+      ` 
     } 
      
   `;
@@ -156,10 +189,31 @@ app.get('/api/transaction_risk_profiles/count', async (req, res) => {
 
 function buildCustomerQuery(options, table_name, count=false) {
   
-  const { limit, offset, search } = options;
+  const { limit, offset, search, risk_filter} = options;
   let whereClause = '';
   const values = [];
   let parameterIndex = 1; 
+
+  let filterText = "";
+
+  const riskLevel = risk_filter ? (risk_filter === "LOW" ? [0, 50] 
+                                    : (risk_filter === "MEDIUM" ? [50, 70] 
+                                        : (risk_filter === "HIGH" ? [70, 85] 
+                                            : (risk_filter === "CRITICAL" ? [85, 1000] 
+                                                : undefined
+                                              )
+                                            )
+                                          )
+                                        ) 
+                                  : undefined;
+
+  if (riskLevel !== undefined) {
+    filterText += `OR "RISK_SCORE" BETWEEN $${parameterIndex} and $${parameterIndex + 1}`;
+    values.push(riskLevel[0], riskLevel[1]);
+    parameterIndex +=2;
+  }
+
+
 
   if (search && search.trim().length > 0) {
     
@@ -168,7 +222,7 @@ function buildCustomerQuery(options, table_name, count=false) {
         (
           "Full_Name" ILIKE $${parameterIndex} OR 
           "Account_No" ILIKE $${parameterIndex}
-
+          ${riskLevel? filterText : ""}
         )
     `;
     
@@ -182,9 +236,15 @@ function buildCustomerQuery(options, table_name, count=false) {
       "${table_name}"
     ${whereClause}
     ${
-      count? "" : `
+      count ? "" : 
+      riskLevel ? `
       ORDER BY 
-      "UPDATED_AT" DESC
+      "RISK_SCORE" DESC,
+      "CREATED_AT" DESC
+      `:
+      `
+      ORDER BY 
+      "CREATED_AT" DESC
       `
     } 
      
@@ -192,6 +252,7 @@ function buildCustomerQuery(options, table_name, count=false) {
 
   const limitValue = limit ? parseInt(limit, 10) : undefined;
   const offsetValue = offset ? parseInt(offset, 10) : undefined;
+  
   
   if (limitValue !== undefined && !isNaN(limitValue)) {
     query += ` LIMIT $${parameterIndex}`;
@@ -207,6 +268,7 @@ function buildCustomerQuery(options, table_name, count=false) {
     values.push(offsetValue);
     parameterIndex++;
   }
+
 
   return {
     query: query.trim(),
@@ -245,8 +307,8 @@ app.get('/api/customer_risk_profiles/count', async (req, res) => {
 
     const { query, values } = buildCustomerQuery(options, TABLE_NAME, count=true);
     
-    console.log('SQL Query:', query);
-    console.log('SQL Values:', values);
+    //console.log('SQL Query:', query);
+    //console.log('SQL Values:', values);
 
   
     const result = await pool.query(query, values);
