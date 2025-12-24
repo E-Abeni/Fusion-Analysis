@@ -190,39 +190,21 @@ app.get('/api/transaction_risk_profiles/count', async (req, res) => {
 
 function buildCustomerQuery(options, table_name, count=false) {
   
-  const { limit, offset, search, risk_filter} = options;
+  const { limit, offset, search} = options;
   let whereClause = '';
   const values = [];
   let parameterIndex = 1; 
 
-  let filterText = "";
-
-  const riskLevel = risk_filter ? (risk_filter === "LOW" ? [0, 50] 
-                                    : (risk_filter === "MEDIUM" ? [50, 70] 
-                                        : (risk_filter === "HIGH" ? [70, 85] 
-                                            : (risk_filter === "CRITICAL" ? [85, 1000] 
-                                                : undefined
-                                              )
-                                            )
-                                          )
-                                        ) 
-                                  : undefined;
-
-  if (riskLevel !== undefined) {
-    filterText += `"RISK_SCORE" >= $${parameterIndex} AND "overall_risk_score" <= $${parameterIndex + 1}`;
-    values.push(riskLevel[0], riskLevel[1]);
-    parameterIndex +=2;
-  }
+  
 
 
 
-  if ((search && search.trim().length > 0) || riskLevel) {
+  if ((search && search.trim().length > 0) ) {
     
     whereClause = `
       WHERE 
         (
-          ${riskLevel? filterText : "1"}
-          OR
+          
           "Full_Name" ILIKE $${parameterIndex} OR 
           "Account_No" ILIKE $${parameterIndex}
         )
@@ -239,15 +221,10 @@ function buildCustomerQuery(options, table_name, count=false) {
     ${whereClause}
     ${
       count ? "" : 
-      riskLevel ? `
-      ORDER BY 
-      "RISK_SCORE" DESC,
-      "CREATED_AT" DESC
-      `:
-      `
-      ORDER BY 
-      "CREATED_AT" DESC
-      `
+        `
+        ORDER BY 
+        "CREATED_AT" DESC
+        `
     } 
      
   `;
