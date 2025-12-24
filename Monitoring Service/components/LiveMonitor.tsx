@@ -125,11 +125,15 @@ export const LiveMonitor: React.FC<LiveMonitorProps> = ({ transactions, onGenera
               value={riskFilter}
               onChange={(e) => setRiskFilter(e.target.value as any)}
             >
-              <option value="ALL">All Risks</option>
-              <option value={RiskLevel.CRITICAL}>Critical</option>
-              <option value={RiskLevel.HIGH}>High</option>
-              <option value={RiskLevel.MEDIUM}>Medium</option>
-              <option value={RiskLevel.LOW}>Low</option>
+              <option value="ALL">Sort By Time</option>
+              <option value={RiskLevel.CRITICAL}>Sort By Risk</option>
+              {
+                /*
+                <option value={RiskLevel.HIGH}>High</option>
+                <option value={RiskLevel.MEDIUM}>Medium</option>
+                <option value={RiskLevel.LOW}>Low</option>
+                */
+              }
             </select>
           </div>
         </div>
