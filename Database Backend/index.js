@@ -75,7 +75,7 @@ function buildTransactionQuery(options, table_name, count=false) {
 
     if (riskLevel !== undefined) {
       console.log("Entered....")
-      filterText += `"overall_risk_score" BETWEEN $${parameterIndex} and $${parameterIndex + 1}`;
+      filterText += `"overall_risk_score" >= $${parameterIndex} AND "overall_risk_score" <= $${parameterIndex + 1}`;
       values.push(riskLevel[0], riskLevel[1]);
       parameterIndex +=2 ;
     }
@@ -209,7 +209,7 @@ function buildCustomerQuery(options, table_name, count=false) {
                                   : undefined;
 
   if (riskLevel !== undefined) {
-    filterText += `"RISK_SCORE" BETWEEN $${parameterIndex} and $${parameterIndex + 1}`;
+    filterText += `"RISK_SCORE" >= $${parameterIndex} AND "overall_risk_score" <= $${parameterIndex + 1}`;
     values.push(riskLevel[0], riskLevel[1]);
     parameterIndex +=2;
   }
