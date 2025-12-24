@@ -10,9 +10,9 @@ const port = 3002;
 
 const pool = new Pool({
   user: process.env.PGUSER,
-  host: process.env.PGHOST,
+  //host: process.env.PGHOST,
   //host: "172.28.112.1",
-  //host: "postgres_db",
+  host: "postgres_db",
   database: process.env.PGDATABASE,
   password: process.env.PGPASSWORD,
   port: process.env.PGPORT,
