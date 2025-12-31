@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from datetime import datetime
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 logging.info("Program Starting at " + str(datetime.now()))
 
@@ -68,7 +68,7 @@ logging.info("[Profile Service] Importing Data to Memory ...")
 df = pd.read_sql_query(f"SELECT {','.join(selected_columns)} FROM test_transactions", engine)
 
 logging.info("[Profile Service] Data imported Successfully")
-logging.info("[Profile Service] Shape: ", df.shape)
+logging.info("[Profile Service] Shape: " + str(df.shape))
 
 logging.info("[Profile Service] Processing the data ...")
 
@@ -448,4 +448,4 @@ all_profiles_df.to_sql("customer_profile", engine, if_exists='replace')
 occupation_summary.to_sql("occupation_profile", engine, if_exists='replace')
 account_age_summary.to_sql("account_age_profile", engine, if_exists='replace')
 
-logging.info("Finish time: ", datetime.now())
+logging.info("Finish time: " + datetime.now())
