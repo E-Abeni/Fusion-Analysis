@@ -212,7 +212,7 @@ df.set_index(['transactiondatetime'])\
 ['amountinbirr'].rolling('1h').count()\
 .groupby('accountno')\
 .max()\
-.rename("Max_Freq_1hr")
+.rename("max_freq_1hr")
 )
 
 all_profiles.append(
@@ -223,7 +223,7 @@ df.set_index(['transactiondatetime'])\
 .groupby('accountno')\
 .max()\
 .apply(lambda x: int(x))\
-.rename("Max_Sum_1hr")
+.rename("max_sum_1hr")
 )
 
 logging.info(f"{(10/25)*100}%")
@@ -237,7 +237,7 @@ df.set_index(['transactiondatetime'])\
 ['amountinbirr'].rolling('1D').count()\
 .groupby('accountno')\
 .max()\
-.rename("Max_Freq_24hr")
+.rename("max_freq_24hr")
 )
 
 all_profiles.append(
@@ -248,7 +248,7 @@ df.set_index(['transactiondatetime'])\
 .groupby('accountno')\
 .max()\
 .apply(lambda x: int(x))\
-.rename("Max_Sum_24hr")
+.rename("max_sum_24hr")
 )
 
 logging.info(f"{(12/25)*100}%")
