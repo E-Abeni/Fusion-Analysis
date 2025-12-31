@@ -448,4 +448,4 @@ all_profiles_df.to_sql("customer_profile", engine, if_exists='replace')
 occupation_summary.to_sql("occupation_profile", engine, if_exists='replace')
 account_age_summary.to_sql("account_age_profile", engine, if_exists='replace')
 
-logging.info("Finish time: " + datetime.now())
+logging.info("Finish time: " + str(datetime.now()))
