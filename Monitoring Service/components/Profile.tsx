@@ -16,7 +16,7 @@ export const CustomerProfile: React.FC = () => {
   const [profileCount, setProfileCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [sortField, setSortField] = useState('');
+  const [sortField, setSortField] = useState('max_sum_24hr');
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
