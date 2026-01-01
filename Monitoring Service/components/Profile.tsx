@@ -206,7 +206,7 @@ export const CustomerProfile: React.FC = () => {
 
       <h2 className="text-lg font-semibold flex items-center gap-2 text-slate-900 dark:text-slate-100 mt-2 mx-10">
         <div className="w-2 h-2 rounded-full bg-red-500 animate-ping"></div>
-        Profiling Behavior (Total Accounts = {<span className="px-2.5 py-1 bg-green-100 rounded text-slate-700 font-black">{Number(profileCount).toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>})
+        Profiling Behavior ( Total Accounts = {<span className="px-2.5 py-1 bg-green-100 rounded text-slate-700 font-black">{Number(profileCount).toLocaleString(undefined, { maximumFractionDigits: 1 })}</span>})
       </h2>
 
       <main className="max-w-[1800px] mx-auto px-10 mt-4">
