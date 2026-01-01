@@ -1,5 +1,107 @@
 import { Transaction, Customer, RiskLevel, TransactionType, STR } from '../types';
 
+
+export const mockAccounts = [
+    {
+        accountno: "'1013410023715015",
+        mean: 846913.9,
+        std: 216496.43,
+        count: "2",
+        max_freq_1hr: 2,
+        max_sum_1hr: "1693827",
+        max_freq_24hr: 2,
+        max_sum_24hr: "1693827",
+        frequent_destinations: null,
+        min_time_lapse_minutes: 0,
+        max_time_lapse_minutes: 0,
+        avg_time_lapse_minutes: 0,
+        last_transaction_time: "2023-12-31T21:32:44.000Z",
+        unknown_beneficiary_risk_score: 2,
+        account_age_days: "46020",
+        account_age_years: 126.08,
+        account_age_bucket: "> 20"
+    },
+    {
+        accountno: "'2024510098716022",
+        mean: 4500.5,
+        std: 1200.22,
+        count: "15",
+        max_freq_1hr: 4,
+        max_sum_1hr: "18000",
+        max_freq_24hr: 8,
+        max_sum_24hr: "36000",
+        frequent_destinations: ["Amazon", "Target"],
+        min_time_lapse_minutes: 5,
+        max_time_lapse_minutes: 120,
+        avg_time_lapse_minutes: 45,
+        last_transaction_time: "2024-05-15T14:20:00.000Z",
+        unknown_beneficiary_risk_score: 4,
+        account_age_days: "365",
+        account_age_years: 1.0,
+        account_age_bucket: "1-2"
+    },
+    {
+        accountno: "'3035610011223344",
+        mean: 125000.0,
+        std: 50000.0,
+        count: "50",
+        max_freq_1hr: 10,
+        max_sum_1hr: "1250000",
+        max_freq_24hr: 25,
+        max_sum_24hr: "3125000",
+        frequent_destinations: ["Crypto Exchange"],
+        min_time_lapse_minutes: 1,
+        max_time_lapse_minutes: 10,
+        avg_time_lapse_minutes: 3,
+        last_transaction_time: "2024-05-20T09:15:00.000Z",
+        unknown_beneficiary_risk_score: 9,
+        account_age_days: "30",
+        account_age_years: 0.08,
+        account_age_bucket: "< 1"
+    },
+    {
+        accountno: "'4046710055667788",
+        mean: 250.75,
+        std: 50.12,
+        count: "120",
+        max_freq_1hr: 1,
+        max_sum_1hr: "300",
+        max_freq_24hr: 3,
+        max_sum_24hr: "800",
+        frequent_destinations: ["Starbucks", "Gas Station"],
+        min_time_lapse_minutes: 60,
+        max_time_lapse_minutes: 1440,
+        avg_time_lapse_minutes: 480,
+        last_transaction_time: "2024-05-18T18:45:00.000Z",
+        unknown_beneficiary_risk_score: 1,
+        account_age_days: "1825",
+        account_age_years: 5.0,
+        account_age_bucket: "5-10"
+    },
+    {
+        accountno: "'5057810099001122",
+        mean: 12500.0,
+        std: 2500.0,
+        count: "5",
+        max_freq_1hr: 5,
+        max_sum_1hr: "62500",
+        max_freq_24hr: 5,
+        max_sum_24hr: "62500",
+        frequent_destinations: null,
+        min_time_lapse_minutes: 1,
+        max_time_lapse_minutes: 2,
+        avg_time_lapse_minutes: 1.5,
+        last_transaction_time: "2024-05-19T23:59:00.000Z",
+        unknown_beneficiary_risk_score: 7,
+        account_age_days: "15",
+        account_age_years: 0.04,
+        account_age_bucket: "< 1"
+    }
+];
+
+
+
+
 const NAMES = [
   "Abenezer Tamirat",                 
   "Midroc Investment Group", 
@@ -34,6 +136,7 @@ const FLAGS = [
   "Layering"
 ];
 
+/*
 export const generateCustomer = (): Customer => {
   const score = Math.floor(Math.random() * 100);
   let level = RiskLevel.LOW;
@@ -73,9 +176,10 @@ export const generateCustomer = (): Customer => {
     avgTransactionValue: avgTxValue * peerDeviation,
     peerGroupAvgTransactionValue: avgTxValue
   };
-};
+};*/
 
-export const generateTransaction = (customer: Customer)/*: Transaction */=> {
+/*
+export const generateTransaction = (customer: Customer)/*: Transaction *//*=> {
   const isHighRisk = customer.riskLevel === RiskLevel.HIGH || customer.riskLevel === RiskLevel.CRITICAL;
   const baseAmount = Math.random() * 50000;
   // Simulate structuring or round numbers if high risk
@@ -107,6 +211,7 @@ export const generateTransaction = (customer: Customer)/*: Transaction */=> {
     flags: [...new Set(txFlags)]
   };
 };
+*/
 
 export const generateSTR = (tx: Transaction, customer: Customer)/*: STR*/ => {
   /*

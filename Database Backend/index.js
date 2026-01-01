@@ -11,7 +11,7 @@ const port = 3002;
 const pool = new Pool({
   user: process.env.PGUSER,
   //host: process.env.PGHOST,
-  //host: "172.28.112.1",
+  //host: "172.20.137.129",
   host: "postgres_db",
   database: process.env.PGDATABASE,
   password: process.env.PGPASSWORD,
@@ -44,10 +44,6 @@ app.get('/api/customer_risk_profiles', async (req, res) => {
   }
 });
 
-
-app.listen(port, () => {
-  console.log(`Backend server listening at http://localhost:${port}`);
-});
 
 
 
@@ -297,4 +293,126 @@ app.get('/api/customer_risk_profiles/count', async (req, res) => {
     console.error('Error executing query', err);
     res.status(500).json({ error: 'Database query failed' });
   }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+function buildCustomerProfileQuery(options, table_name, count=false) {
+  
+  const { limit, offset, search, sortField } = options;
+  let whereClause = '';
+  const values = [];
+  let parameterIndex = 1; 
+
+  if ((search && search.trim().length > 0) ) {
+    
+    whereClause = `
+      WHERE 
+        (
+          "accountno" ILIKE $${parameterIndex}
+        )
+    `;
+    
+    values.push(`%${search.trim()}%`);
+    parameterIndex++;
+  }
+
+  let query = `
+    SELECT 
+      ${count? "count(*)":"*"} FROM 
+      "${table_name}"
+    ${whereClause}
+    ${
+      count ? "" : 
+        `ORDER BY ` +  (sortField ? 
+            `"${sortField}" DESC`
+            : `"accountno" ASC`)
+    } 
+     
+  `;
+
+  const limitValue = limit ? parseInt(limit, 10) : undefined;
+  const offsetValue = offset ? parseInt(offset, 10) : undefined;
+  
+  
+  if (limitValue !== undefined && !isNaN(limitValue)) {
+    query += ` LIMIT $${parameterIndex}`;
+    values.push(limitValue);
+    parameterIndex++;
+  } else {
+    
+    //query += ` LIMIT 10`;
+  }
+
+  if (offsetValue !== undefined && !isNaN(offsetValue)) {
+    query += ` OFFSET $${parameterIndex}`;
+    values.push(offsetValue);
+    parameterIndex++;
+  }
+
+
+  return {
+    query: query.trim(),
+    values,
+  };
+}
+
+
+app.get('/api/customer_profile/filter', async (req, res) => {
+  const TABLE_NAME = "customer_profile"
+  //console.log("Reached here....")
+  try {
+    const options = req.query;
+    //console.log("Options: ", options)
+
+    const { query, values } = buildCustomerProfileQuery(options, TABLE_NAME);
+    
+    //console.log('SQL Query:', query);
+    //console.log('SQL Values:', values);
+
+  
+    const result = await pool.query(query, values);
+    
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
+
+
+app.get('/api/customer_profile/count', async (req, res) => {
+  const TABLE_NAME = "customer_profile"
+  try {
+    const options = req.query;
+
+    const { query, values } = buildCustomerProfileQuery(options, TABLE_NAME, count=true);
+    
+    //console.log('SQL Query:', query);
+    //console.log('SQL Values:', values);
+  
+    const result = await pool.query(query, values);
+    
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error executing query', err);
+    res.status(500).json({ error: 'Database query failed' });
+  }
+});
+
+
+
+
+
+app.listen(port, () => {
+  console.log(`Backend server listening at http://localhost:${port}`);
 });

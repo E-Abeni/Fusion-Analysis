@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Dashboard } from './components/Dashboard';
+import {CustomerProfile} from "./components/Profile"
 import { LiveMonitor } from './components/LiveMonitor';
 import { STRManager } from './components/STRManager';
 import { CustomerRiskMonitor } from './components/CustomerRiskMonitor';
 import { EngineStats, Transaction, Customer, STR, RiskLevel } from './types';
-import { generateTransaction, generateCustomer, generateSTR } from './services/mockDataService';
 import { LayoutDashboard, Activity, AlertTriangle, ShieldCheck, Menu, Users, Settings, Moon, Sun, ExternalLink } from 'lucide-react';
 import {get_transactions, get_customers} from "./services/database"
 
@@ -12,7 +12,8 @@ enum View {
   DASHBOARD = 'DASHBOARD',
   MONITOR = 'MONITOR',
   CUSTOMERS = 'CUSTOMERS',
-  ALERTS = 'ALERTS'
+  ALERTS = 'ALERTS',
+  PROFILE = 'PROFILE'
 }
 
 
@@ -70,7 +71,7 @@ const App: React.FC = () => {
     const customer = customers.find(c => c.id === 3);
     if (!customer) return;
 
-    const newSTR = generateSTR(tx, customer);
+    const newSTR = null;
     //newSTR.reason = "Manual Trigger by Analyst";
     setStrs(prev => [newSTR, ...prev]);
     //alert(`STR Generated successfully: ${newSTR.id}`);
@@ -139,7 +140,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-slate-300 dark:bg-slate-950 text-slate-100 dark:text-slate-100 font-sans transition-colors duration-300">
+    <div className="flex flex-row h-screen bg-slate-300 dark:bg-slate-950 text-slate-100 dark:text-slate-100 font-sans transition-colors duration-300">
       {/* Sidebar */}
       <aside className="w-64 border-r border-slate-700 dark:border-slate-800 bg-black dark:bg-slate-950 flex flex-col hidden md:flex">
         <div className="p-6 flex items-center gap-3 border-b border-slate-700 dark:border-slate-800">
@@ -154,6 +155,14 @@ const App: React.FC = () => {
           >
             <LayoutDashboard className="w-5 h-5" />
             Dashboard
+          </button>
+
+          <button 
+            onClick={() => setCurrentView(View.PROFILE)}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${currentView === View.PROFILE ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-200 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 hover:text-slate-800 dark:hover:text-slate-200'}`}
+          >
+            <Users className="w-5 h-5" />
+            Accounts Profile
           </button>
           
           <button 
@@ -241,12 +250,14 @@ const App: React.FC = () => {
                   {currentView === View.MONITOR && 'Real-time Transaction Analysis'}
                   {currentView === View.CUSTOMERS && 'Customer Risk Profiling'}
                   {currentView === View.ALERTS && 'Suspicious Activity Reports'}
+                  {currentView === View.PROFILE && 'Behavioral Profile Analysis'}
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
                   {currentView === View.DASHBOARD && 'Central Database & Message Broker Metrics'}
                   {currentView === View.MONITOR && 'Live stream of processed transactions and risk scoring'}
                   {currentView === View.CUSTOMERS && 'Behavioral analysis, peer grouping, and KYC integrity checks'}
                   {currentView === View.ALERTS && 'Review and file generated STRs'}
+                  {currentView === View.PROFILE && 'Statistical behavior profiling of customer accounts'}
                 </p>
               </div>
             </header>
@@ -258,6 +269,13 @@ const App: React.FC = () => {
                 transactions={transactions} 
               />
             )}
+
+            {currentView === View.PROFILE && (
+              <CustomerProfile 
+                
+              />
+            )}
+
             
             {currentView === View.MONITOR && (
               <div className="h-[calc(100vh-200px)]">
