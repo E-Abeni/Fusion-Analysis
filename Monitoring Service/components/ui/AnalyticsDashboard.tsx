@@ -274,8 +274,8 @@ export const AnalyticsDashboard: React.FC = ({account}) => {
       {/* Summary Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-gradient-to-br from-indigo-500 to-indigo-600 p-6 rounded-3xl text-white shadow-lg shadow-indigo-100">
-          <p className="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-1">Total Transfers</p>
-          <p className="text-3xl font-extrabold">{TRANSACTION_DATA.used_transaction_types.TRANSFER}</p>
+          <p className="text-indigo-100 text-sm font-medium uppercase tracking-wider mb-1">Total Transactions</p>
+          <p className="text-3xl font-extrabold">{TRANSACTION_DATA.used_transaction_types.TRANSFER} Txs</p>
           <div className="mt-4 flex items-center gap-2 text-indigo-100 text-xs">
             <span className="bg-white/20 p-1 rounded-full">
               <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
