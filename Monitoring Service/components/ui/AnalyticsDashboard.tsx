@@ -69,17 +69,29 @@ export const AnalyticsDashboard: React.FC = ({account}) => {
       .slice(0, 8);
   }, []);
 
-  const branchData = useMemo(() => {
-    return Object.entries(TRANSACTION_DATA.prefered_branches)
-      .map(([name, value]) => ({ name, value }));
-  }, []);
-
+  
   const beneficiaryData = useMemo(() => {
     return Object.entries(TRANSACTION_DATA.top_beneficiaries)
       .map(([name, value]) => ({ name, value }))
       .sort((a: any, b: any) => b.value - a.value)
-      .slice(0, 10);
+      .slice(0, 5);
   }, []);
+
+  const branchData = useMemo(() => {
+    return Object.entries(TRANSACTION_DATA.prefered_branches)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a: any, b: any) => b.value - a.value)
+      .slice(0, 5);
+  }, []);
+
+  const transactionTypeData = useMemo(() => {
+    return Object.entries(TRANSACTION_DATA.used_transaction_types)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a: any, b: any) => b.value - a.value)
+      .slice(0, 5);
+  }, []);
+
+  
 
   return (
     <div className="space-y-6">
@@ -207,6 +219,56 @@ export const AnalyticsDashboard: React.FC = ({account}) => {
             ))}
           </div>
         </div>
+
+        {/* Top Branches Table-style chart */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col">
+          <h3 className="text-lg font-bold text-slate-800 mb-6">Top Branches Used</h3>
+          <div className="space-y-4 flex-1 overflow-y-auto pr-2">
+            {branchData.map((ben, i) => (
+              <div key={ben.name} className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 border border-slate-100 hover:border-indigo-200 transition-colors">
+                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-xs font-bold text-slate-400 shadow-sm border border-slate-100">
+                  {i + 1}
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm font-mono font-medium text-slate-700">{ben.name}</div>
+                  <div className="w-full bg-slate-200 h-1.5 rounded-full mt-2 overflow-hidden">
+                    <div 
+                      className="bg-indigo-500 h-full rounded-full transition-all duration-1000"
+                      style={{ width: `${(ben.value / branchData[0].value) * 100}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="text-sm font-bold text-slate-800 bg-indigo-50 px-3 py-1 rounded-lg">
+                  {ben.value} tx
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Transaction Types */}
+        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-800 mb-6">Transaction Types</h3>
+          <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart layout="vertical" data={transactionTypeData} margin={{ left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                <XAxis type="number" hide />
+                <YAxis dataKey="name" type="category" width={80} axisLine={false} tickLine={false} tick={{fontSize: 12, fill: '#64748b'}} />
+                <Tooltip 
+                  cursor={{fill: '#f8fafc'}}
+                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                  {destinationData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
       </div>
 
       {/* Summary Row */}
@@ -220,23 +282,6 @@ export const AnalyticsDashboard: React.FC = ({account}) => {
             </span>
             
           </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-          <p className="text-slate-400 text-sm font-medium uppercase tracking-wider mb-1">Primary Branch</p>
-          <p className="text-3xl font-extrabold text-slate-800">ET0011341</p>
-          <p className="text-slate-500 text-xs mt-4">Handling 97.5% of total volume</p>
-        </div>
-
-        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-          <p className="text-3xl font-extrabold text-slate-800 mt-2">Transaction Type</p>
-          <div className="h-2 w-full bg-slate-100 rounded-full mt-2 overflow-hidden">
-            <div className="bg-emerald-500 h-full w-[95%]" />
-          </div>
-          
-          <p className="text-slate-500 text-xs mt-1">70% via TRANSFER</p>
-          <p className="text-slate-500 text-xs mt-1">20% via DEPOSIT</p>
-          <p className="text-slate-500 text-xs mt-1">10% via WITHDRAWAL</p>
         </div>
       </div>
     </div>
