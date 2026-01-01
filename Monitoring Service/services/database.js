@@ -48,7 +48,7 @@ const risk_types = ["Zombie Account Activation ",
               "Round Number Hoarding ",
               "Bentford Law Violation "]
 
-const host = "database_backend"; //"localhost"; //172.20.137.129
+const host = "172.20.137.129"; //"localhost"; //172.20.137.129
 
 
 export async function get_transactions(){
